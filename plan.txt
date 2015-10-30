@@ -1,9 +1,11 @@
--Train convolutional neural network(s) for position and/or move analysis in hex (try 13x13 first)
--Train by Deep TD learning of some kind
+-Train convolutional neural network(s) for move analysis in hex (try 13x13 first)
+-probably going to try move analysis instead of position as it is potentially more applicable for other putposes
+-Train by Deep TD learning of some kind (probably deep Q learning adversarial variant, expected sarsa with softmax policy gradually tuned toward Q-learning?)
 -Use something like simple resistance heuristic as a mentor
 -Generate around 10,000 games worth of plausible positions using stochastic version of wolve
 -Use batch normalization
--Use some elements of deep symmetry networks (preserve reflection symmetry)
+-Look into means of preserving reflection symmetry
+-rotate and change colors so current player is always horizontal (should reduce what has to be learned) 
 -board encoded using opponent cells, player cells and 2 edge connection channels for player cells 
 -at least one layer of out of bounds cells will be included and colored as the apporpriate edge with edge connection set appropriately
 -do not bother to backpropogate error for filled (unplayable) cells since these can be trivially eliminated anyway and learning them is thus irrelevant
