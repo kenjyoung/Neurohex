@@ -45,31 +45,50 @@ def new_game():
 	game[black, :, input_size-padding:] = 1
 	return game
 
-def play_move(game, move):
+def cell(move):
 	x =	ord(move[0].lower())-ord('a')+padding
 	y = int(move[1:])-1+padding
+	return (x,y)
+
+#cell of the mirrored move
+def cell_m(move):
+	x = int(move[1:])-1+padding
+	y = ord(move[0].lower())-ord('a')+padding
+	return (x,y)
+
+def play_cell(game, cell, color):
+	x =	cell[0]
+	y = cell[1]
 	west_connection = False
 	east_connection = False
-	game[white, x, y] = 1
-	for n in neighbors((x,y)):
-		if(game[east, n[0], n[1]]):
-			east_connection = True
-		if(game[west, n[0], n[1]]):
-			west_connection = True
-	if(east_connection):
-		flood_fill(game, (x,y), east)
-	if(west_connection):
-		flood_fill(game, (x,y), west)
+	game[color, x, y] = 1
+	#we only track white groups since we are building a network to play as white
+	if(color == white):
+		for n in neighbors((x,y)):
+			if(game[east, n[0], n[1]]):
+				east_connection = True
+			if(game[west, n[0], n[1]]):
+				west_connection = True
+		if(east_connection):
+			flood_fill(game, (x,y), east)
+		if(west_connection):
+			flood_fill(game, (x,y), west)
 
 def preprocess(filename):
 	infile = open(filename, 'r')
 	positions = []
 	for line in infile:
-		game = new_game()
+		gameW = new_game() #white plays first in this game
+		gameB = new_game() #equivalent game where black plays first
 		moves = line.split()
 		#don't want to add terminal states to initialization positions
 		del moves[-1]
+		move_parity = 0
 		for move in moves:
-			play_move(game, move)
-			positions.append(np.copy(game))
+			play_cell(gameB, cell(move), white if move_parity else black)
+			play_cell(gameW, cell_m(move), black if move_parity else white)
+			move_parity = not move_parity
+			positions.append(np.copy(gameB if move_parity else gameW))
+
+preprocess("raw_games.dat")
 
