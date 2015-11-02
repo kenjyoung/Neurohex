@@ -3,7 +3,8 @@
 -Train by Deep TD learning of some kind (probably deep Q learning adversarial variant, expected sarsa with softmax policy gradually tuned toward Q-learning?)
 -Use something like simple resistance heuristic as a mentor
 -Generate around 10,000 games worth of plausible positions using stochastic version of wolve
--Use batch normalization (maybe, not sure if feasible for Q-learning)
+-Use batch normalization
+-Use experience replay
 -Look into means of preserving reflection symmetry (probably just reflect data set)
 -rotate and change colors so current player is always horizontal (should reduce what has to be learned) this can be done efficiently by maintaining two input matrices during training one of which is the mirror of the other and switching which one is used for training the network each move.
 -board encoded using opponent cells, player cells and 2 edge connection channels for player cells 
