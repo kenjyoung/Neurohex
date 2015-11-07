@@ -2,6 +2,10 @@ import numpy as np
 
 white = 0
 black = 1
+
+def other(color):
+	return not color
+
 west = 2
 east = 3
 north = 4
@@ -12,13 +16,13 @@ input_size = boardsize+2*padding
 neighbor_patterns = ((-1,0), (0,-1), (-1,1), (0,1), (1,0), (1,-1))
 
 def neighbors(cell):
-		"""
-		Return list of neighbors of the passed cell.
-		"""
-		x = cell[0]
-		y = cell[1]
-		return [(n[0]+x , n[1]+y) for n in neighbor_patterns\
-			if (padding<=n[0]+x and n[0]+x<boardsize+padding and padding<=n[1]+y and n[1]+y<boardsize+padding)]
+	"""
+	Return list of neighbors of the passed cell.
+	"""
+	x = cell[0]
+	y = cell[1]
+	return [(n[0]+x , n[1]+y) for n in neighbor_patterns\
+		if (0<=n[0]+x and n[0]+x<input_size and 0<=n[1]+y and n[1]+y<input_size)]
 
 def new_game():
 	game = np.zeros((6,input_size,input_size), dtype=bool)
@@ -32,24 +36,89 @@ def new_game():
 	game[south, :, input_size-padding:] = 1
 	return game
 
+#doesn't fix edge connections
+def clear_cell(game, cell):
+	game[:, cell[0], cell[1]] = 0
+
+def flood_fill(game, cell, color, edge):
+	game[edge, cell[0], cell[1]] = 1
+	for n in neighbors(cell):
+		if(game[color, n[0], n[1]] and not game[edge, n[0], n[1]]):
+			flood_fill(game, n, color, edge)
+
 def play_cell(game, cell, color):
-	x =	cell[0]
-	y = cell[1]
 	edge1_connection = False
 	edge2_connection = False
-	game[color, x, y] = 1
+	game[color, cell[0], cell[1]] = 1
 	if(color == white):
 		edge1 = east
 		edge2 = west
 	else:
 		edge1 = north
 		edge2 = south
-	for n in neighbors((x,y)):
-		if(game[edge1, n[0], n[1]]):
-			east_connection = True
-		if(game[edge2, n[0], n[1]]):
-			west_connection = True
+	for n in neighbors(cell):
+		if(game[edge1, n[0], n[1]] and game[color, n[0], n[1]]):
+			edge1_connection = True
+		if(game[edge2, n[0], n[1]] and game[color, n[0], n[1]]):
+			edge2_connection = True
 	if(edge1_connection):
-		flood_fill(game, (x,y), edge1)
+		flood_fill(game, cell, color, edge1)
 	if(edge2_connection):
-		flood_fill(game, (x,y), edge2)
+		flood_fill(game, cell, color, edge2)
+
+def state_string(state):
+	"""
+	Print an ascii representation of the input.
+	"""
+	w = 'O'
+	b = '@'
+	empty = '.'
+	end_color = '\033[0m'
+	edge1_color = '\033[31m'
+	edge2_color = '\033[32m'
+	both_color =  '\033[33m'
+	invalid = '#'
+	ret = '\n'
+	coord_size = len(str(boardsize))
+	offset = 1
+	ret+=' '*(offset+2)
+	for x in range(input_size):
+		if(x<padding or x>=boardsize+padding):
+			ret+=' '*(offset*2+1)
+		else:
+			ret+=chr(ord('A')+(x-padding))+' '*offset*2
+	ret+='\n'
+	for y in range(input_size):
+		if(y<padding or y>=boardsize+padding):
+			ret+=' '*(offset*2+coord_size)
+		else:
+			ret+=str(y+1-padding)+' '*(offset*2+coord_size-len(str(y+1-padding)))
+		for x in range(input_size):
+			if(state[white, x, y] == 1):
+				if(state[west, x, y] == 1 and state[east, x, y]):
+					ret+=both_color
+				elif(state[west, x,y]):
+					ret+=edge1_color
+				elif(state[east, x, y]):
+					ret+=edge2_color
+				if(state[black, x, y] == 1):
+					ret+=invalid
+				else:
+					ret+=w
+				ret+=end_color
+			elif(state[black, x, y] == 1):
+				if(state[north, x, y] == 1 and state[south, x, y]):
+					ret+=both_color
+				elif(state[north, x,y]):
+					ret+=edge1_color
+				elif(state[south, x, y]):
+					ret+=edge2_color
+				ret+=b
+				ret+=end_color
+			else:
+				ret+=empty
+			ret+=' '*offset*2
+		ret+="\n"+' '*offset*(y+1)
+	ret+=' '*(offset*2+1)+(' '*offset*2)*input_size
+
+	return ret

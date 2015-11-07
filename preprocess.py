@@ -13,12 +13,6 @@ is transformed to be white-to-play (by reflection and white-black swap of
 black-to-play positions). 
 """
 
-def flood_fill(game, cell, edge):
-	game[edge, cell[0], cell[1]] = 1
-	for n in neighbors(cell):
-		if(game[white, n[0], n[1]] and not game[edge, n[0], n[1]]):
-			flood_fill(game, n, edge)
-
 def cell(move):
 	x =	ord(move[0].lower())-ord('a')+padding
 	y = int(move[1:])-1+padding
@@ -30,15 +24,16 @@ def cell_m(move):
 	y = ord(move[0].lower())-ord('a')+padding
 	return (x,y)
 
-def preprocess(filename):
+def preprocess(filename, trim_final = True):
 	infile = open(filename, 'r')
 	positions = []
 	for line in infile:
 		gameW = new_game() #white plays first in this game
 		gameB = new_game() #equivalent game where black plays first
 		moves = line.split()
-		#don't want to add terminal states to initialization positions
-		del moves[-1]
+		if trim_final:
+			#don't want to add terminal states to initialization positions
+			del moves[-1]
 		move_parity = 0
 		for move in moves:
 			play_cell(gameB, cell(move), white if move_parity else black)

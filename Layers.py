@@ -39,7 +39,7 @@ class HexConvLayer:
 		)
 
 		#TODO: possibly change to use position dependent biases
-		b_values = numpy.zeros((num_D5_filters+num_D3_filters)), dtyper=theano.config.floatX)
+		b_values = numpy.zeros((num_D5_filters+num_D3_filters), dtyper=theano.config.floatX)
 		self.b = theano.shared(value=b_values, borrow=True)
 
 		conv_out3 = conv.conv2d(
