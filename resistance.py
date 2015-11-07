@@ -16,10 +16,11 @@ def fill_connect(state, cell, color, checked):
 	checked[cell] = True
 	connected = set()
 	for n in neighbors(cell):
-		if(state[color,n[0], n[1]] and not checked[n]):
-			fill_connect(state, n, color, checked)
-		elif(not state[other(color), n[0], n[1]]):
-			connected.add(n)
+		if(not checked[n]):
+			if(state[color,n[0], n[1]]):
+				connected = connected | fill_connect(state, n, color, checked)
+			elif(not state[other(color), n[0], n[1]]):
+				connected.add(n)
 	return connected
 
 
@@ -27,15 +28,16 @@ def fill_connect(state, cell, color, checked):
 def get_connected(state, cell, color, checked):
 	connected = set()
 	for n in neighbors(cell):
-		if(state[color, n[0], n[1]] and not checked[n]):
-			connected = connected | fill_connect(state, n, color, checked)
-		elif(not state[other(color),n[0],n[1]]):
-			connected.add(n)
+		if(not checked[n]):
+			if(state[color, n[0], n[1]]):
+				connected = connected | fill_connect(state, n, color, checked)
+			elif(not state[other(color),n[0],n[1]]):
+				connected.add(n)
 	return connected
 
 
 
-def resistance(state, color):
+def resistance(state, empty, color):
 	"""
 	Output a resistance heuristic score over all empty nodes:
 		-Treat the west edge connected nodes as one source node with voltage 1
@@ -44,7 +46,8 @@ def resistance(state, color):
 		-Treat edges to white nodes (except source and dest) as perfect conductors
 		-Treat edges to black nodes as perfect resistors
 	"""
-	num_empty, index_to_location = get_empty(state)
+	index_to_location = empty
+	num_empty = len(empty)
 	index_to_location = index_to_location
 	location_to_index = {index_to_location[i]:i for i in range(len(index_to_location))}
 
@@ -79,34 +82,41 @@ def resistance(state, color):
 
 	#voltage at each cell
 	V = np.linalg.solve(G,I)
+
 	#energy disipation in cell
-	E = np.zeros(num_empty)
+	E = np.zeros((input_size, input_size))
 	#conductance from source to dest
 	C = 0
 
 	for i in range(num_empty):
 		for j in range(num_empty):
 			if(i!=j and G[i,j] != 0):
-				E[i] += abs(G[i,j]*(V[j] - V[i])*(V[j] - V[i]))
+				E[index_to_location[i]] += abs(G[i,j]*(V[j] - V[i])*(V[j] - V[i]))
 			if(index_to_location[i] in source_connected):
-				C += V[i] - V[j]
+				if(index_to_location[j] not in source_connected):
+					C += V[i] - V[j]
 
 	return E, C
 
 
 def score(state, color):
-	temp = np.copy(state)
-	num_empty, empty = get_empty(temp)
 	Q = {}
-	for move in empty:
-		play_cell(temp, move, color)
-		E1, C1 = resistance(temp, color)
-		E2, C2 = resistance(temp, other(color))
-		if(C1>C2):
-			Q[move] = 1 - C2/C1
+	num_empty, empty = get_empty(state)
+	E1, C1 = resistance(state, empty, color)
+	E2, C2 = resistance(state, empty, other(color))
+	if(abs(C1)>abs(C2)):
+		state_value = 1 - C2/C1
+	else:
+		state_value = C1/C2 - 1
+
+	num_empty, empty = get_empty(state)
+	for cell in empty:
+		C1_prime = C1 +E1[cell]
+		C2_prime = C2 -E2[cell]
+		if(C1_prime>C2_prime):
+			Q[cell] = 1 - C2_prime/C1_prime
 		else:
-			Q[move] = C1/C2 - 1
-		clear_cell(temp, move)
+			Q[cell] = C1_prime/C2_prime - 1
 
 	output = np.zeros((boardsize, boardsize))
 	for cell, value in Q.iteritems():
