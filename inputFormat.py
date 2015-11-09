@@ -36,6 +36,15 @@ def new_game():
 	game[south, :, input_size-padding:] = 1
 	return game
 
+def winner(game):
+	if(game[east,0,0] and game[west,0,0]):
+		return white
+	elif(game[north,0,0] and game[south,0,0]):
+		return black
+	return None
+
+
+
 #doesn't fix edge connections
 def clear_cell(game, cell):
 	game[:, cell[0], cell[1]] = 0
