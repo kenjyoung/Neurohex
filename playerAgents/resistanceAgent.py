@@ -1,5 +1,6 @@
 import sys
-sys.path.append("..")
+import os
+sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/../")
 from gamestate import gamestate
 from resistance import score
 from copy import copy, deepcopy
@@ -24,15 +25,15 @@ class resistanceAgent:
 		"""
 		toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
 		raw_scores = score(stateToInput(self.state), toplay)
-		score_padding = boardsize - self.state.size
-		self.scores = raw_scores[padding:boardsize-padding,padding:boardsize-padding]
-
+		score_padding = (boardsize - self.state.size)/2
+		self.scores = raw_scores[score_padding:self.state.size+score_padding,score_padding:self.state.size+score_padding]
 
 	def best_move(self):
 		"""
 		Return the best move according to the current tree.
 		"""
+		score_padding = boardsize - self.state.size
 		return np.unravel_index(self.scores.argmax(), self.scores.shape)
 
 	def set_gamestate(self, state):
-		self.rootstate = deepcopy(state)
+		self.state = deepcopy(state)

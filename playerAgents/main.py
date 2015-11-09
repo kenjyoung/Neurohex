@@ -1,5 +1,6 @@
 from gtpinterface import gtpinterface
 from resistanceAgent import resistanceAgent
+import sys
 
 def main():
 	"""
@@ -11,7 +12,8 @@ def main():
 	while True:
 		command = raw_input()
 		success, response = interface.send_command(command)
-		print "= " if success else "? ", response, '\n'
+		print "= " if success else "? ",response,"\n"
+		sys.stdout.flush()
 
 if __name__ == "__main__":
 	main()

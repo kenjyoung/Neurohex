@@ -24,16 +24,19 @@ def neighbors(cell):
 	return [(n[0]+x , n[1]+y) for n in neighbor_patterns\
 		if (0<=n[0]+x and n[0]+x<input_size and 0<=n[1]+y and n[1]+y<input_size)]
 
-def new_game():
+def new_game(size = boardsize):
+	if(size%2 ==0):
+		raise ValueError("boardsize must be odd")
+	true_padding = (input_size - size)/2
 	game = np.zeros((6,input_size,input_size), dtype=bool)
-	game[white, 0:padding, :] = 1
-	game[white, input_size-padding:, :] = 1
-	game[west, 0:padding, :] = 1
-	game[east, input_size-padding:, :] = 1
-	game[black, :, 0:padding] = 1
-	game[black, :, input_size-padding:] = 1
-	game[north, :, 0:padding] = 1
-	game[south, :, input_size-padding:] = 1
+	game[white, 0:true_padding, :] = 1
+	game[white, input_size-true_padding:, :] = 1
+	game[west, 0:true_padding, :] = 1
+	game[east, input_size-true_padding:, :] = 1
+	game[black, :, 0:true_padding] = 1
+	game[black, :, input_size-true_padding:] = 1
+	game[north, :, 0:true_padding] = 1
+	game[south, :, input_size-true_padding:] = 1
 	return game
 
 def winner(game):

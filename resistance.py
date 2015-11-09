@@ -1,5 +1,6 @@
 import numpy as np
 from inputFormat import *
+import sys
 
 def get_empty(state):
 	count = 0
@@ -100,6 +101,10 @@ def resistance(state, empty, color):
 	C = 0
 
 	for i in range(num_empty):
+		if index_to_location[i] in source_connected:
+			Il[index_to_location[i]] += abs(V[i] - 1)/2
+		if index_to_location[i] in dest_connected:
+			Il[index_to_location[i]] += abs(V[i])/2
 		for j in range(num_empty):
 			if(i!=j and G[i,j] != 0):
 				Il[index_to_location[i]] += abs(G[i,j]*(V[i] - V[j]))/2
@@ -127,6 +132,8 @@ def score(state, color):
 
 	num_empty, empty = get_empty(state)
 	for cell in empty:
+		#this makes some sense as an approximation of
+		#the conductance of the next state
 		C1_prime = C1 + I1[cell]**2/(3*(1-I1[cell]))
 		C2_prime = max(0,C2 - I2[cell])
 		if(C1_prime>C2_prime):

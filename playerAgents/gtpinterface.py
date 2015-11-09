@@ -72,7 +72,7 @@ class gtpinterface:
 		"""
 		Return the name of the program.
 		"""
-		return (True, "Mopyhex")
+		return (True, "Neurohex")
 
 	def gtp_version(self, args):
 		"""
@@ -206,9 +206,12 @@ class gtpinterface:
 		self.agent.search(self.move_time)
 		move = self.agent.best_move()
 
-		if(move == gamestate.GAMEOVER):
+		if(self.game.winner()):
 			return (False, "The game is already over")
-		self.game.play(move)
+		try:
+			self.game.play(move)
+		except:
+			print move
 		self.agent.move(move)
 		return (True, chr(ord('a')+move[0])+str(move[1]+1))
 
