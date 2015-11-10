@@ -4,11 +4,11 @@ from theano.tensor.nnet import conv
 import numpy as np
 
 class HexConvLayer:
-	def __init__(self, rng, input, input_shape, num_D5_filters, num_D3_filters, num_input_maps):
-		D3_W_bound = numpy.sqrt(6. / (7*(num_input_maps + num_D3_filters)))
-		D5_W_bound = numpy.sqrt(6. / (19*(num_input_maps + num_D5_filters)))
+	def __init__(self, rng, input, input_shape, num_D5_filters, num_D3_filters):
+		D3_W_bound = numpy.sqrt(6. / (7*(input_shape[1] + num_D3_filters)))
+		D5_W_bound = numpy.sqrt(6. / (19*(input_shape[1] + num_D5_filters)))
 
-		W3_values = rng.uniform(low=-W3_bound, high=W3_bound, size=(num_D3_filters,7))
+		W3_values = theano.shared(np.asarray(rng.uniform(low=-W3_bound, high=W3_bound, size=(num_D3_filters,7))), borrow = True)
 		W3_array = np.zeros((num_D3_filters,3,3))
 
 		#TODO: improve on the way this convertion is handled
@@ -23,7 +23,7 @@ class HexConvLayer:
 			borrow=True
 		)
 
-		W5_values = rng.uniform(low=-W3_bound, high=W3_bound, size=(num_D3_filters,19))
+		self.W5_values = theano.shared(np.asarray(rng.uniform(low=-W3_bound, high=W3_bound, size=(num_D3_filters,19))), borrow = True)
 		W5_array = np.zeros((num_D5_filters,5,5))
 
 		for i in range(num_D5_filters):
@@ -33,7 +33,7 @@ class HexConvLayer:
 			W5_array[i,:4,3] = W5_values[i,12:15]
 			W5_array[i,:3,4] = W5_values[i,15:]
 
-		self.W5 = theano.shared(
+		W5 = theano.shared(
 			W5_array,
 			borrow=True
 		)
@@ -43,7 +43,7 @@ class HexConvLayer:
 		self.b = theano.shared(value=b_values, borrow=True)
 
 		conv_out3 = conv.conv2d(
-			input = input,
+			input = input[:,:,1:-1,1:-1],
 			filters = self.W3,
 			filter_shape = (num_D3_filters,3,3),
 			input_shape = input_shape
@@ -58,8 +58,34 @@ class HexConvLayer:
 
 		full_out = T.concatenate([conv_out5, conv_out3], axis=1)
 
-		self.output = T.relu(full_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+		squished_out = T.relu(full_out + self.b.dimshuffle('x', 0, 'x', 'x'))
 
-		self.params = [self.W5, self.W3, self.b]
+		padded_out = T.zeros(inputshape[2:])
+		padded_out.set_subtensor(padded_out[:,:,2:-2,2:-2], squished_out)
+
+		self.output = padded_out
+
+		self.params = [self.W5_values, self.W3_values, self.b]
 
 		self.input = input
+
+class FullyConnectedLayer:
+	def __init__(self, rng, input, n_in, n_out):
+		self.input = input
+		W_values = numpy.asarray(
+                rng.uniform(
+                    low=-numpy.sqrt(6. / (n_in + n_out)),
+                    high=numpy.sqrt(6. / (n_in + n_out)),
+                    size=(n_in, n_out)
+                ),
+                dtype=theano.config.floatX
+            )
+
+		self.W = theano.shared(value=W_values, name='W', borrow=True)
+		b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
+        self.b = theano.shared(value=b_values, name='b', borrow=True)
+
+        self.output = T.relu(T.dot(input, self.W) + self.b)
+
+        self.params = [self.W, self.b]
+
