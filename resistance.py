@@ -145,13 +145,3 @@ def score(state, color):
 	for cell, value in Q.iteritems():
 		output[cell[0]-padding, cell[1]-padding] = value
 	return output 
-
-
-
-
-
-
-
-
-
-
