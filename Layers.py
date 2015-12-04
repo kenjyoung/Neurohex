@@ -5,20 +5,21 @@ import numpy as np
 
 class HexConvLayer:
     def __init__(self, rng, input, input_shape, num_D5_filters, num_D3_filters):
-        D3_W_bound = np.sqrt(6. / (7*(input_shape[1] + num_D3_filters)))
-        D5_W_bound = np.sqrt(6. / (19*(input_shape[1] + num_D5_filters)))
+        W3_bound = np.sqrt(6. / (7*(input_shape[1] + num_D3_filters)))
+        W5_bound = np.sqrt(6. / (19*(input_shape[1] + num_D5_filters)))
 
         self.W3_values = theano.shared(
             np.asarray(
                 rng.uniform(
-                    low=-D3_W_bound,
-                    high=D3_W_bound,
+                    low=-W3_bound,
+                    high=W3_bound,
                     size=(num_D3_filters,input_shape[1],7)
                 ),
                 dtype=theano.config.floatX
             ),
             borrow = True
         )
+        #Place weights in hexagonal filter of diameter 3
         W3 = T.zeros((num_D3_filters,input_shape[1],3,3))
         W3 = T.set_subtensor(W3[:,:,1:,0], self.W3_values[:,:,:3])
         W3 = T.set_subtensor(W3[:,:,:,1], self.W3_values[:,:,3:6])
@@ -27,14 +28,15 @@ class HexConvLayer:
         self.W5_values = theano.shared(
             np.asarray(
                 rng.uniform(
-                    low=-D3_W_bound,
-                    high=D3_W_bound,
+                    low=-W5_bound,
+                    high=W5_bound,
                     size=(num_D3_filters,input_shape[1],19)
                 ),
                 dtype=theano.config.floatX
             ),
             borrow = True
         )
+        #Place weights in hexagonal filter of diameter 5
         W5 = T.zeros((num_D5_filters,input_shape[1],5,5))
         W5 = T.set_subtensor(W5[:,:,2:,0], self.W5_values[:,:,:3])
         W5 = T.set_subtensor(W5[:,:,1:,1], self.W5_values[:,:,3:7])

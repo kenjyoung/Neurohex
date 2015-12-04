@@ -8,20 +8,29 @@ from inputFormat import *
 from Layers import *
 
 
+def data_shuffle(x, y):
+	rng_state = rand.get_state()
+	rand.shuffle(x)
+	rand.set_state(rng_state)
+	rand.shuffle(y)
+
 rng = np.random.RandomState(23455)
+alpha = 0.01
 
-print "preprocessing data... "
-positions = preprocess("data/raw_games_small.dat")
-resistance_scores = []
-
-print "computing resistance scores..."
-for position in positions[0:2]:
-	resistance_scores.append(score(position, white))
+print "loading data... "
+datafile = open("data/scoredPositions.npz", 'r')
+data = np.load(datafile)
+positions = data['positions']
+scores = data['scores']
+datafile.close()
 
 print "shuffling data... "
-scored_positions = zip(positions, resistance_scores)
-rand.shuffle(scored_positions)
+data_shuffle(scores,positions)
+shared_positions = theano.shared(positions.astype(theano.config.floatX), name="positions")
+shared_scores = theano.shared(scores.astype(theano.config.floatX), name="scores")
 
+print "building model..."
+index = T.iscalar(name="index") #index of data
 x = T.matrix('x') #position matrix
 y = T.matrix('y') #target output score
 
@@ -62,6 +71,21 @@ params = layer0.params + layer1.params + layer2.params
 cost = T.mean(T.sqr(output - y.flatten()))
 
 grads = T.grad(cost, params)
+
+updates = [
+    (param_i, param_i-alpha * grad_i)
+    for param_i, grad_i in zip(params, grads)
+]
+
+train_model = theano.function(
+    [index],
+    cost,
+    updates = updates,
+    givens={
+        x: shared_positions[index],
+        y: shared_scores[index]
+    }
+)
 
 
 

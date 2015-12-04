@@ -46,12 +46,6 @@ def winner(game):
 		return black
 	return None
 
-
-
-#doesn't fix edge connections
-def clear_cell(game, cell):
-	game[:, cell[0], cell[1]] = 0
-
 def flood_fill(game, cell, color, edge):
 	game[edge, cell[0], cell[1]] = 1
 	for n in neighbors(cell):
