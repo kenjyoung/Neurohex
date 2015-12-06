@@ -28,10 +28,11 @@ print "shuffling data... "
 data_shuffle(scores,positions)
 shared_positions = theano.shared(positions.astype(theano.config.floatX), name="positions")
 shared_scores = theano.shared(scores.astype(theano.config.floatX), name="scores")
+n_train = shared_scores.get_value(borrow=True).shape[0]
 
 print "building model..."
 index = T.iscalar(name="index") #index of data
-x = T.matrix('x') #position matrix
+x = T.tensor3('x') #position matrix
 y = T.matrix('y') #target output score
 
 layer0_input = x.reshape((1, 6, input_size, input_size))
@@ -68,7 +69,7 @@ output = T.nnet.sigmoid(layer2.output)
 
 params = layer0.params + layer1.params + layer2.params
 
-cost = T.mean(T.sqr(output - y.flatten()))
+cost = T.mean((output - y.flatten())**2)
 
 grads = T.grad(cost, params)
 
@@ -86,6 +87,15 @@ train_model = theano.function(
         y: shared_scores[index]
     }
 )
+
+numEpochs = 1
+
+#ToDo:shuffle data after every epoch
+for epoch in range(numEpochs):
+	for i in range(n_train):
+		train_model(i)
+
+print "done training!"
 
 
 
