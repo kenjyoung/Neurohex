@@ -21,16 +21,16 @@ class HexConvLayer:
         )
         #Place weights in hexagonal filter of diameter 3
         W3 = T.zeros((num_D3_filters,input_shape[1],3,3))
-        W3 = T.set_subtensor(W3[:,:,1:,0], self.W3_values[:,:,:3])
-        W3 = T.set_subtensor(W3[:,:,:,1], self.W3_values[:,:,3:6])
-        W3 = T.set_subtensor(W3[:,:,:2,2], self.W3_values[:,:,6:])
+        W3 = T.set_subtensor(W3[:,:,1:,0], self.W3_values[:,:,:2])
+        W3 = T.set_subtensor(W3[:,:,:,1], self.W3_values[:,:,2:5])
+        W3 = T.set_subtensor(W3[:,:,:2,2], self.W3_values[:,:,5:])
 
         self.W5_values = theano.shared(
             np.asarray(
                 rng.uniform(
                     low=-W5_bound,
                     high=W5_bound,
-                    size=(num_D3_filters,input_shape[1],19)
+                    size=(num_D5_filters,input_shape[1],19)
                 ),
                 dtype=theano.config.floatX
             ),
@@ -41,8 +41,8 @@ class HexConvLayer:
         W5 = T.set_subtensor(W5[:,:,2:,0], self.W5_values[:,:,:3])
         W5 = T.set_subtensor(W5[:,:,1:,1], self.W5_values[:,:,3:7])
         W5 = T.set_subtensor(W5[:,:,:,2], self.W5_values[:,:,7:12])
-        W5 = T.set_subtensor(W5[:,:,:4,3], self.W5_values[:,:,12:15])
-        W5 = T.set_subtensor(W5[:,:,:3,4], self.W5_values[:,:,15:])
+        W5 = T.set_subtensor(W5[:,:,:4,3], self.W5_values[:,:,12:16])
+        W5 = T.set_subtensor(W5[:,:,:3,4], self.W5_values[:,:,16:])
 
         #TODO: possibly change to use position dependent biases
         b_values = np.zeros((num_D5_filters+num_D3_filters), dtype=theano.config.floatX)
@@ -52,7 +52,7 @@ class HexConvLayer:
             input = input[:,:,1:-1,1:-1],
             filters = W3,
             filter_shape = (num_D3_filters,input_shape[1],3,3),
-            image_shape = input_shape
+            image_shape = [input_shape[0], input_shape[1], input_shape[2]-2, input_shape[3]-2]
         )
 
         conv_out5 = conv.conv2d(
