@@ -126,7 +126,7 @@ def score(state, color):
 	"""
 	Q = {}
 	num_empty, empty = get_empty(state)
-	filled_fraction = (boardsize**2-num_empty+1)/boardsize**2
+	#filled_fraction = (boardsize**2-num_empty+1)/boardsize**2
 	I1, C1 = resistance(state, empty, color)
 	I2, C2 = resistance(state, empty, other(color))
 
