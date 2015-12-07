@@ -41,7 +41,7 @@ def preprocess(filename, trim_final = True):
 			move_parity = not move_parity
 			positions.append(np.copy(gameB if move_parity else gameW))
 		num_positions = len(positions)
-		positions_array = np.empty((num_positions,6,input_size,input_size))
+		positions_array = np.empty((num_positions,6,input_size,input_size), dtype=bool)
 		for i in range(num_positions):
 			positions_array[i]=positions[i]
 	return positions_array
