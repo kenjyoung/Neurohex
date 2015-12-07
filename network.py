@@ -15,7 +15,7 @@ def data_shuffle(x, y):
 	rand.shuffle(y)
 
 rng = np.random.RandomState(23455)
-alpha = 0.01
+alpha = 0.1
 
 print "loading data... "
 datafile = open("data/scoredPositions.npz", 'r')
@@ -24,11 +24,11 @@ positions = data['positions']
 scores = data['scores']
 datafile.close()
 
-print "shuffling data... "
-data_shuffle(scores,positions)
+# print "shuffling data... "
+# data_shuffle(scores,positions)
 shared_positions = theano.shared(positions.astype(theano.config.floatX), name="positions")
 shared_scores = theano.shared(scores.astype(theano.config.floatX), name="scores")
-print shared_positions.shape.eval()
+# print shared_positions.shape.eval()
 n_train = shared_scores.get_value(borrow=True).shape[0]
 
 print "building model..."
@@ -89,13 +89,22 @@ train_model = theano.function(
     }
 )
 
-numEpochs = 1
+numEpochs = 1000
+iteration = 0
+print_interval = 100
 
-#ToDo:shuffle data after every epoch
+print "Training model on mentor set..."
 for epoch in range(numEpochs):
-	for i in range(n_train):
-		print "example "+str(i)
-		train_model(i)
+	indices = range(n_train)
+	np.random.shuffle(indices)
+	cost = 0
+	for i in indices:
+		cost+=train_model(i)
+		iteration+=1
+		if iteration%print_interval == 0:
+			print "Training Example: ", iteration
+			print "Cost: ",cost/print_interval
+			cost = 0
 
 print "done training!"
 
