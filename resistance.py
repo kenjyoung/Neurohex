@@ -91,7 +91,6 @@ def resistance(state, empty, color):
 	V = np.linalg.solve(G,I)
 
 	V_board = np.zeros((input_size, input_size))
-	#test code remove:
 	for i in range(num_empty):
 		V_board[index_to_location[i]] = V[i]
 

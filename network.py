@@ -6,7 +6,7 @@ from Layers import *
 
 
 class network:
-	def __init__(self, rng = None):
+	def __init__(self, rng = None, load_file = None):
 		if(not rng): rng = np.random.RandomState(23455)
 		self.input = T.tensor3('input') #position matrix
 		layer0_input = self.input.reshape((1, 6, input_size, input_size))
