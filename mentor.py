@@ -1,4 +1,5 @@
 import theano
+from lasagne.updates import rmsprop
 from theano import tensor as T
 import numpy as np
 import numpy.random as rand
@@ -11,8 +12,6 @@ def data_shuffle(x, y):
 	rand.shuffle(x)
 	rand.set_state(rng_state)
 	rand.shuffle(y)
-
-alpha = 0.1
 
 print "loading data... "
 datafile = open("data/scoredPositions.npz", 'r')
@@ -30,37 +29,36 @@ n_train = shared_scores.get_value(borrow=True).shape[0]
 
 print "building model..."
 index = T.iscalar(name="index") #index of data
-y = T.matrix('y') #target output score
-
-network = network()
+y = T.tensor3('y') #target output score
 
 numEpochs = 1000
 iteration = 0
-print_interval = 100
+print_interval = 10
+batch_size = 1
+numBatches = n_train/batch_size
 
-cost = T.mean((network.output - y.flatten())**2)
+network = network(batch_size=batch_size)
 
-grads = T.grad(cost, network.params)
+cost = T.mean((network.output - y)**2)
 
-updates = [
-    (param_i, param_i-alpha * grad_i)
-    for param_i, grad_i in zip(network.params, grads)
-]
+#should tune parameters here at some point, this just uses defaults
+updates = rmsprop(cost, network.params)
 
 train_model = theano.function(
     [index],
     cost,
     updates = updates,
     givens={
-        network.input: shared_positions[index],
-        y: shared_scores[index]
+        network.input: shared_positions[index*batch_size : (index+1)*batch_size],
+        y: shared_scores[index*batch_size : (index+1)*batch_size]
     }
 )
 
+#TODO: fix shuffling
 print "Training model on mentor set..."
 for epoch in range(numEpochs):
-	indices = range(n_train)
-	np.random.shuffle(indices)
+	indices = range(numBatches)
+	#np.random.shuffle(indices)
 	cost = 0
 	for i in indices:
 		cost+=train_model(i)
