@@ -5,6 +5,8 @@ import numpy as np
 import numpy.random as rand
 from inputFormat import *
 from network import network
+import cPickle
+import argparse
 
 
 def data_shuffle(x, y):
@@ -13,6 +15,11 @@ def data_shuffle(x, y):
 	rand.set_state(rng_state)
 	rand.shuffle(y)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
+parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
+args = parser.parse_args()
+
 print "loading data... "
 datafile = open("data/scoredPositions.npz", 'r')
 data = np.load(datafile)
@@ -20,55 +27,78 @@ positions = data['positions']
 scores = data['scores']
 datafile.close()
 
+
 # print "shuffling data... "
 # data_shuffle(scores,positions)
 shared_positions = theano.shared(positions.astype(theano.config.floatX), name="positions")
 shared_scores = theano.shared(scores.astype(theano.config.floatX), name="scores")
-# print shared_positions.shape.eval()
 n_train = shared_scores.get_value(borrow=True).shape[0]
 
-print "building model..."
-index = T.iscalar(name="index") #index of data
+indices = T.ivector(name="indices") #index of data
 y = T.tensor3('y') #target output score
 
-numEpochs = 1000
+numEpochs = 100
 iteration = 0
 print_interval = 10
-batch_size = 1
+batch_size = 10
 numBatches = n_train/batch_size
 
-network = network(batch_size=batch_size)
+#if load parameter is passed load a network from a file
+if args.load:
+	print "loading model..."
+	f = file(args.load, 'rb')
+	network = cPickle.load(f)
+	f.close()
+else:
+	print "building model..."
+	network = network(batch_size=batch_size)
 
-cost = T.mean((network.output - y)**2)
+cost = T.mean(T.sqr(network.output - y))
 
 #should tune parameters here at some point, this just uses defaults
 updates = rmsprop(cost, network.params)
 
 train_model = theano.function(
-    [index],
+    [indices],
     cost,
     updates = updates,
     givens={
-        network.input: shared_positions[index*batch_size : (index+1)*batch_size],
-        y: shared_scores[index*batch_size : (index+1)*batch_size]
+        network.input: shared_positions[indices],
+        y: shared_scores[indices]
     }
 )
 
-#TODO: fix shuffling
+test_model = theano.function(
+    [indices],
+    cost,
+    givens={
+        network.input: shared_positions[indices],
+        y: shared_scores[indices]
+    }
+)
+
 print "Training model on mentor set..."
+indices = range(n_train)
 for epoch in range(numEpochs):
-	indices = range(numBatches)
-	#np.random.shuffle(indices)
+	np.random.shuffle(indices)
 	cost = 0
-	for i in indices:
-		cost+=train_model(i)
+	for batch in range(numBatches):
+		cost+=test_model(indices[batch*batch_size:(batch+1)*batch_size])
+	print "Cost: ",cost/numBatches
+	for batch in range(numBatches):
+		train_model(indices[batch*batch_size:(batch+1)*batch_size])
 		iteration+=1
-		if iteration%print_interval == 0:
-			print "Training Example: ", iteration
-			print "Cost: ",cost/print_interval
-			cost = 0
 
 print "done training!"
+
+print "saving network..."
+if args.save:
+	f = file(args.save, 'wb')
+else:
+	f = file('mentor_network.save', 'wb')
+cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+f.close()
+
 
 
 
