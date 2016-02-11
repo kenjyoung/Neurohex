@@ -92,8 +92,8 @@ def resistance(state, empty, color):
 		V = np.linalg.solve(G,I)
 	#slightly hacky fix for rare case of isolated empty cells
 	#happens rarely and fix should be fine but could improve
-	except numpy.linalg.linalg.LinAlgError:
-		V = np.linalg.lstsq(G,I)
+	except np.linalg.linalg.LinAlgError:
+		V = np.linalg.lstsq(G,I)[0]
 
 	V_board = np.zeros((input_size, input_size))
 	for i in range(num_empty):
