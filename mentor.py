@@ -21,10 +21,11 @@ parser.add_argument("--save", "-s", type=str, help="Specify a file to save train
 args = parser.parse_args()
 
 print "loading data... "
-datafile = open("data/scoredPositions.npz", 'r')
+datafile = open("data/scoredPositionsFull.npz", 'r')
 data = np.load(datafile)
 positions = data['positions']
 scores = data['scores']
+		
 datafile.close()
 
 

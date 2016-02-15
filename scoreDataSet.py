@@ -12,9 +12,10 @@ for i in range(num_positions):
 		print "completion: ",i/output_interval
 	try:
 		scores[i]=score(positions[i], 0)
+	#if for some reason an uncaught singularity occurs just skip this position
 	except np.linalg.linalg.LinAlgError:
 		print "singular position at ",str(i),": ", state_string(positions[i])
-		scores[i]=-1*np.ones((boardsize, boardsize))
+		i-=1
 
 print "saving to file..."
 savefile = open("data/scoredPositions.npz", 'w')
