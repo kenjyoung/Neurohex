@@ -10,10 +10,20 @@ west = 2
 east = 3
 north = 4
 south = 5
+num_channels = 6
 boardsize = 13
 padding = 2
 input_size = boardsize+2*padding
 neighbor_patterns = ((-1,0), (0,-1), (-1,1), (0,1), (1,0), (1,-1))
+
+def cell(move):
+	x =	ord(move[0].lower())-ord('a')+padding
+	y = int(move[1:])-1+padding
+	return (x,y)
+
+#cell of the mirrored move
+def cell_m(cell):
+	return (cell[1],cell[0])
 
 def neighbors(cell):
 	"""
@@ -24,11 +34,17 @@ def neighbors(cell):
 	return [(n[0]+x , n[1]+y) for n in neighbor_patterns\
 		if (0<=n[0]+x and n[0]+x<input_size and 0<=n[1]+y and n[1]+y<input_size)]
 
+def mirror_game(game, size = boardsize):
+	m_game = np.zeros((num_channels,input_size,input_size), dtype=bool)
+	for i in range(num_channels):
+		m_game[i]=np.transpose(game(i))
+	return m_game
+
 def new_game(size = boardsize):
 	if(size%2 ==0):
 		raise ValueError("boardsize must be odd")
 	true_padding = (input_size - size)/2
-	game = np.zeros((6,input_size,input_size), dtype=bool)
+	game = np.zeros((num_channels,input_size,input_size), dtype=bool)
 	game[white, 0:true_padding, :] = 1
 	game[white, input_size-true_padding:, :] = 1
 	game[west, 0:true_padding, :] = 1

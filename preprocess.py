@@ -13,17 +13,6 @@ is transformed to be white-to-play (by reflection and white-black swap of
 black-to-play positions). 
 """
 
-def cell(move):
-	x =	ord(move[0].lower())-ord('a')+padding
-	y = int(move[1:])-1+padding
-	return (x,y)
-
-#cell of the mirrored move
-def cell_m(move):
-	x = int(move[1:])-1+padding
-	y = ord(move[0].lower())-ord('a')+padding
-	return (x,y)
-
 def preprocess(filename, trim_final = True):
 	infile = open(filename, 'r')
 	positions = []
@@ -36,8 +25,9 @@ def preprocess(filename, trim_final = True):
 			del moves[-1]
 		move_parity = 0
 		for move in moves:
-			play_cell(gameB, cell(move), white if move_parity else black)
-			play_cell(gameW, cell_m(move), black if move_parity else white)
+			move_cell = cell(move)
+			play_cell(gameB, move_cell, white if move_parity else black)
+			play_cell(gameW, cell_m(move_cell), black if move_parity else white)
 			move_parity = not move_parity
 			positions.append(np.copy(gameB if move_parity else gameW))
 		num_positions = len(positions)

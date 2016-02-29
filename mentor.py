@@ -111,9 +111,3 @@ else:
 	f = file('mentor_network.save', 'wb')
 cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 f.close()
-
-
-
-
-
-
