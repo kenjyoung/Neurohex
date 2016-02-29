@@ -96,11 +96,9 @@ for epoch in range(numEpochs):
 	np.random.shuffle(indices)
 	cost = 0
 	for batch in range(numBatches):
-		cost+=test_model(indices[batch*batch_size:(batch+1)*batch_size])
-	print "Cost: ",cost/numBatches
-	for batch in range(numBatches):
-		train_model(indices[batch*batch_size:(batch+1)*batch_size])
+		cost+=train_model(indices[batch*batch_size:(batch+1)*batch_size])
 		iteration+=1
+		print "Cost: ",cost/(batch+1)
 
 print "done training!"
 
