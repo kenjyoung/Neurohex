@@ -80,8 +80,8 @@ class FullyConnectedLayer:
         self.input = input
         W_values = np.asarray(
                 rng.uniform(
-                    low=-np.sqrt(6. / (n_in + n_out)),
-                    high=np.sqrt(6. / (n_in + n_out)),
+                    low=-10*np.sqrt(6. / (n_in + n_out)),
+                    high=10*np.sqrt(6. / (n_in + n_out)),
                     size=(n_in, n_out)
                 ),
                 dtype=theano.config.floatX
@@ -93,6 +93,27 @@ class FullyConnectedLayer:
         self.b = theano.shared(value=b_values, name='b', borrow=True)
 
         self.output = T.nnet.relu(T.dot(input, self.W) + self.b)
+
+        self.params = [self.W, self.b]
+
+class SigmoidLayer:
+    def __init__(self, rng, input, n_in, n_out):
+        self.input = input
+        W_values = np.asarray(
+                rng.uniform(
+                    low=-10*np.sqrt(6. / (n_in + n_out)),
+                    high=10*np.sqrt(6. / (n_in + n_out)),
+                    size=(n_in, n_out)
+                ),
+                dtype=theano.config.floatX
+            )
+        self.W = theano.shared(value=W_values, name='W', borrow=True)
+
+
+        b_values = np.zeros((n_out,), dtype=theano.config.floatX)
+        self.b = theano.shared(value=b_values, name='b', borrow=True)
+
+        self.output = T.nnet.sigmoid(T.dot(input, self.W) + self.b)
 
         self.params = [self.W, self.b]
 

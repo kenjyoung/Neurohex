@@ -1,4 +1,5 @@
 import theano
+import time
 from lasagne.updates import rmsprop
 from theano import tensor as T
 import numpy as np
@@ -41,7 +42,7 @@ y = T.tensor3('y') #target output score
 numEpochs = 100
 iteration = 0
 print_interval = 10
-batch_size = 10
+batch_size = 1
 numBatches = n_train/batch_size
 
 #if load parameter is passed load a network from a file
@@ -56,8 +57,10 @@ else:
 
 cost = T.mean(T.sqr(network.output - y))
 
-#should tune parameters here at some point, this just uses defaults
-updates = rmsprop(cost, network.params)
+alpha = 0.001
+rho = 0.9
+epsilon = 1e-6
+updates = rmsprop(cost, network.params, alpha, rho, epsilon)
 
 train_model = theano.function(
     [indices],
@@ -77,6 +80,15 @@ test_model = theano.function(
         y: shared_scores[indices]
     }
 )
+
+evaluate_model = theano.function(
+	[indices],
+	network.output,
+	givens={
+        network.input: shared_positions[indices],
+    }
+)
+
 
 print "Training model on mentor set..."
 indices = range(n_train)

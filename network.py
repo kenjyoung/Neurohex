@@ -41,19 +41,16 @@ class network:
 			(batch_size, layer1_D3+layer1_D5, input_size, input_size),
 			layer2_D5,
 			layer2_D3
-			)
+		)
 
-		layer3 = FullyConnectedLayer(
+		layer3 = SigmoidLayer(
 		 	rng,
 		 	input = layer2.output.flatten(2),
 		 	n_in = (layer2_D3+layer2_D5)*input_size*input_size,
 		 	n_out = boardsize*boardsize
 		)
 
-
-		self.output = 2*T.nnet.sigmoid(layer3.output)-1
-
-		self.output = self.output.reshape((batch_size, boardsize, boardsize))
+		self.output = 2*layer3.output.reshape((batch_size, boardsize, boardsize))-1
 
 		self.params = layer0.params + layer1.params + layer2.params +layer3.params
 
