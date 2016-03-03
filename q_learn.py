@@ -16,7 +16,13 @@ def data_shuffle(x, y):
 	rand.set_state(rng_state)
 	rand.shuffle(y)
 
-def policy(state):
+def policy(state, evaluator):
+	rand = np.random.random()
+    if(rand>Emu):
+    	scores = evaluator(state)
+    	return np.unravel_index(scores.argmax(), scores.shape)
+    return (np.random.choice(range(boardsize)),np.random.choice(range(boardsize)))
+)
 
 
 parser = argparse.ArgumentParser()
@@ -31,8 +37,7 @@ positions = data['positions']
 datafile.close()
 numPositions = len(positions)
 
-indices = T.ivector(name="indices") #index of data
-y = T.tensor3('y') #target output score
+input_state = T.tensor3('input_state')
 
 numEpisodes = 100
 batch_size = 10
@@ -46,6 +51,17 @@ if args.load:
 else:
 	print "building model..."
 	network = network(batch_size=batch_size)
+)
+
+#zeros used for running network on a single state without modifying batch size
+zero_inputs = theano.shared(np.zeros(np.concatenate(network.batch_size,input_shape)))
+evaluate_model = theano.function(
+	[inputs],
+	network.output[0],
+	givens={
+        network.input: concatenate(input_state,zero_inputs),
+	}
+)
 
 for i in range(numEpisodes):
 	#randomly choose who is to move from each position to increase variability in dataset
@@ -55,7 +71,7 @@ for i in range(numEpisodes):
 	gameW = copy(positions(index))
 	gameB = mirror_game(gameW)
 	while(winner(gameW)==None):
-		move_cell = policy(gameW if move_parity)
+		move_cell = policy(gameW if move_parity else gameB, evaluate_model)
 		play_cell(gameB, move_cell, white if move_parity else black)
 		play_cell(gameW, cell_m(move_cell), black if move_parity else white)
 		move_parity = not move_parity

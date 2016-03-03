@@ -93,12 +93,18 @@ evaluate_model = theano.function(
 print "Training model on mentor set..."
 indices = range(n_train)
 for epoch in range(numEpochs):
+	print "epoch: ",epoch
 	np.random.shuffle(indices)
-	cost = 0
+	cost_sum = 0
 	for batch in range(numBatches):
-		cost+=train_model(indices[batch*batch_size:(batch+1)*batch_size])
+		cost=train_model(indices[batch*batch_size:(batch+1)*batch_size])
+		if(cost>2):
+			print cost
+			print scores[indices[batch*batch_size:(batch+1)*batch_size]]
+			raise ValueError("unexpected value of cost")
+		cost_sum+=cost
 		iteration+=1
-		print "Cost: ",cost/(batch+1)
+		print "Cost: ",cost_sum/(batch+1)
 
 print "done training!"
 

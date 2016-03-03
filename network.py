@@ -10,6 +10,7 @@ class network:
 	def __init__(self, batch_size = 1, rng = None, load_file = None):
 		if(not rng): rng = np.random.RandomState(234567)
 		self.input = T.tensor4('input') #position matrix
+		self.batch_size = batch_size
 		layer0_D3 = 16
 		layer0_D5 = 0
 
