@@ -18,18 +18,21 @@ def data_shuffle(x, y):
 
 def policy(state, evaluator):
 	rand = np.random.random()
-    if(rand>Emu):
-    	scores = evaluator(state)
-    	return scores.argmax()
-    return (np.random.choice(range(boardsize)),np.random.choice(range(boardsize)))
+	if(rand>Emu):
+		scores = evaluator(state)
+		return scores.argmax()
+	return (np.random.choice(range(boardsize)),np.random.choice(range(boardsize)))
 
 def Q_update():
 	batch = np.random.choice(np.arange(0,replay_capacity), size=(batch_size))
-	scores1 = evaluate_model_batch(state1_memory[batch])
-	scores2 = evaluate_model_batch(state2_memory[batch])
+	states = state1_memory[batch]
+	scores = evaluate_model_batch(state2_memory[batch])
 	actions = action_memory[batch]
 	rewards = reward_memory[batch]
-	#ToDo: finish this************
+	targets = zeros(rewards.size())
+	targets[rewards==1] = 1
+	targets[rewards==0] = -np.min(scores,2)
+	train_model(states,targets,actions)
 	
 
 
@@ -52,19 +55,19 @@ numPositions = len(positions)
 input_state = T.tensor3('input_state')
 
 state_batch = T.tensor4('state_batch')
-value_batch = T.fvector('value_batch')
-action_batch = T.fmatrix('action_batch')
+target_batch = T.fvector('target_batch')
+action_batch = T.ivector('action_batch')
 
 
-replay_capacity = 100000
+replay_capacity = 100
 
 #replay memory from which updates are drawn
 replay_index = 0
 replay_full = False
-state1_memory = np.zeros(np.concatenate(replay_capacity, input_shape), dtype=bool_)
-action_memory = np.zeros(replay_capacity, dtype=int8)
-reward_memory = np.zeros(replay_capacity, dtype=bool_)
-state2_memory = np.zeros(np.concatenate(replay_capacity, input_shape), dtype=bool_)
+state1_memory = np.zeros(np.concatenate(([replay_capacity], input_shape)), dtype=bool)
+action_memory = np.zeros(replay_capacity, dtype=np.int8)
+reward_memory = np.zeros(replay_capacity, dtype=bool)
+state2_memory = np.zeros(np.concatenate(([replay_capacity], input_shape)), dtype=bool)
 
 numEpisodes = 100
 batch_size = 10
@@ -79,27 +82,26 @@ if args.load:
 else:
 	print "building model..."
 	network = network(batch_size=batch_size)
-)
 
 #zeros used for running network on a single state without modifying batch size
-zero_inputs = theano.shared(np.zeros(np.concatenate(network.batch_size,input_shape)))
+input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))))
 evaluate_model_single = theano.function(
 	[input_state],
 	network.output[0],
 	givens={
-        network.input: concatenate(input_state,zero_inputs),
+        network.input: T.set_subtensor(input_padding[0,:,:,:], input_state),
 	}
 )
 
 evaluate_model_batch = theano.function(
-	[input_batch],
+	[state_batch],
 	network.output,
 	givens={
-        network.input: input_state,
+        network.input: state_batch,
 	}
 )
 
-cost = T.mean(T.sqr(network.output[T.arange(y.shape[0]),action] - y))
+cost = T.mean(T.sqr(network.output[T.arange(target_batch.shape[0]),action_batch] - target_batch))
 
 alpha = 0.001
 rho = 0.9
@@ -108,13 +110,13 @@ updates = rmsprop(cost, network.params, alpha, rho, epsilon)
 
 train_model = theano.function(
 	[state_batch],
-	[value_batch],
+	[target_batch],
 	[action_batch],
-	updates = upgates,
+	cost,
 	givens={
 		network.input: state_batch,
-		action: action_batch
-		y: value_batch
+		action_batch: action_batch,
+		target_batch: target_batch
 	}
 )
 
@@ -136,7 +138,7 @@ for i in range(numEpisodes):
 			#only the player who just moved can win, so if anyone wins the reward is 1
 			#for the current player
 			reward_memory[replay_index] = 1
-		else
+		else:
 			reward_memory[replay_index] = 0
 
 		state2_memory[replay_index,:,:] = copy(gameB if move_parity else gameW)
@@ -145,7 +147,6 @@ for i in range(numEpisodes):
 		if(replay_index>=replay_capacity):
 			replay_full = True
 			replay_index = 0
-
 		if(replay_full):
 			Q_update()
 
