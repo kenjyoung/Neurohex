@@ -20,9 +20,21 @@ def policy(state, evaluator):
 	rand = np.random.random()
     if(rand>Emu):
     	scores = evaluator(state)
-    	return np.unravel_index(scores.argmax(), scores.shape)
+    	return scores.argmax()
     return (np.random.choice(range(boardsize)),np.random.choice(range(boardsize)))
-)
+
+def Q_update():
+	batch = np.random.choice(np.arange(0,replay_capacity), size=(batch_size))
+	scores1 = evaluate_model_batch(state1_memory[batch])
+	scores2 = evaluate_model_batch(state2_memory[batch])
+	actions = action_memory[batch]
+	rewards = reward_memory[batch]
+	#ToDo: finish this************
+	
+
+
+
+
 
 
 parser = argparse.ArgumentParser()
@@ -39,6 +51,21 @@ numPositions = len(positions)
 
 input_state = T.tensor3('input_state')
 
+state_batch = T.tensor4('state_batch')
+value_batch = T.fvector('value_batch')
+action_batch = T.fmatrix('action_batch')
+
+
+replay_capacity = 100000
+
+#replay memory from which updates are drawn
+replay_index = 0
+replay_full = False
+state1_memory = np.zeros(np.concatenate(replay_capacity, input_shape), dtype=bool_)
+action_memory = np.zeros(replay_capacity, dtype=int8)
+reward_memory = np.zeros(replay_capacity, dtype=bool_)
+state2_memory = np.zeros(np.concatenate(replay_capacity, input_shape), dtype=bool_)
+
 numEpisodes = 100
 batch_size = 10
 
@@ -47,6 +74,7 @@ if args.load:
 	print "loading model..."
 	f = file(args.load, 'rb')
 	network = cPickle.load(f)
+	batch_size = network.batch_size
 	f.close()
 else:
 	print "building model..."
@@ -55,11 +83,38 @@ else:
 
 #zeros used for running network on a single state without modifying batch size
 zero_inputs = theano.shared(np.zeros(np.concatenate(network.batch_size,input_shape)))
-evaluate_model = theano.function(
-	[inputs],
+evaluate_model_single = theano.function(
+	[input_state],
 	network.output[0],
 	givens={
         network.input: concatenate(input_state,zero_inputs),
+	}
+)
+
+evaluate_model_batch = theano.function(
+	[input_batch],
+	network.output,
+	givens={
+        network.input: input_state,
+	}
+)
+
+cost = T.mean(T.sqr(network.output[T.arange(y.shape[0]),action] - y))
+
+alpha = 0.001
+rho = 0.9
+epsilon = 1e-6
+updates = rmsprop(cost, network.params, alpha, rho, epsilon)
+
+train_model = theano.function(
+	[state_batch],
+	[value_batch],
+	[action_batch],
+	updates = upgates,
+	givens={
+		network.input: state_batch,
+		action: action_batch
+		y: value_batch
 	}
 )
 
@@ -71,15 +126,37 @@ for i in range(numEpisodes):
 	gameW = copy(positions(index))
 	gameB = mirror_game(gameW)
 	while(winner(gameW)==None):
-		move_cell = policy(gameW if move_parity else gameB, evaluate_model)
+		action = policy(gameW if move_parity else gameB, evaluate_model_single)
+		action_memory[replay_index] = action
+		state1_memory[replay_index,:,:] = copy(gameW if move_parity else gameB)
+		move_cell = np.unravel_index(action, (boardsize,boardsize) )
 		play_cell(gameB, move_cell, white if move_parity else black)
 		play_cell(gameW, cell_m(move_cell), black if move_parity else white)
+		if(not winner(gameW)==None):
+			#only the player who just moved can win, so if anyone wins the reward is 1
+			#for the current player
+			reward_memory[replay_index] = 1
+		else
+			reward_memory[replay_index] = 0
+
+		state2_memory[replay_index,:,:] = copy(gameB if move_parity else gameW)
 		move_parity = not move_parity
+		replay_index+=1
+		if(replay_index>=replay_capacity):
+			replay_full = True
+			replay_index = 0
+
+		if(replay_full):
+			Q_update()
+
+
+
+
 
 print "saving network..."
 if args.save:
 	f = file(args.save, 'wb')
 else:
-	f = file('mentor_network.save', 'wb')
+	f = file('Q_network.save', 'wb')
 cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 f.close()

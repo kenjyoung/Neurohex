@@ -36,7 +36,7 @@ shared_positions = theano.shared(positions.astype(theano.config.floatX), name="p
 shared_scores = theano.shared(scores.astype(theano.config.floatX), name="scores")
 n_train = shared_scores.get_value(borrow=True).shape[0]
 
-indices = T.ivector(name="indices") #index of data
+indices = T.ivector("indices") #index of data
 y = T.tensor3('y') #target output score
 
 numEpochs = 100
@@ -55,7 +55,7 @@ else:
 	print "building model..."
 	network = network(batch_size=batch_size)
 
-cost = T.mean(T.sqr(network.output - y))
+cost = T.mean(T.sqr(network.output.reshape((batch_size, boardsize, boardsize)) - y))
 
 alpha = 0.001
 rho = 0.9

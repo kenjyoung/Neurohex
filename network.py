@@ -51,7 +51,7 @@ class network:
 		 	n_out = boardsize*boardsize
 		)
 
-		self.output = 2*layer3.output.reshape((batch_size, boardsize, boardsize))-1
+		self.output = 2*layer3.output-1
 
 		self.params = layer0.params + layer1.params + layer2.params +layer3.params
 
