@@ -10,12 +10,6 @@ import cPickle
 import argparse
 
 
-def data_shuffle(x, y):
-	rng_state = rand.get_state()
-	rand.shuffle(x)
-	rand.set_state(rng_state)
-	rand.shuffle(y)
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
 parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")

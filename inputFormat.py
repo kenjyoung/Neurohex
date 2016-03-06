@@ -38,7 +38,7 @@ def neighbors(cell):
 def mirror_game(game, size = boardsize):
 	m_game = np.zeros(input_shape, dtype=bool)
 	for i in range(num_channels):
-		m_game[i]=np.transpose(game(i))
+		m_game[i]=np.transpose(game[i])
 	return m_game
 
 def new_game(size = boardsize):

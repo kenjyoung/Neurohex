@@ -9,19 +9,17 @@ import cPickle
 import argparse
 from copy import copy
 
-
-def data_shuffle(x, y):
-	rng_state = rand.get_state()
-	rand.shuffle(x)
-	rand.set_state(rng_state)
-	rand.shuffle(y)
-
 def policy(state, evaluator):
 	rand = np.random.random()
-	if(rand>Emu):
+	played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
+		      state[black,padding:boardsize+padding,padding:boardsize+padding]).flatten()
+	if(rand>epsilon_q):
 		scores = evaluator(state)
+		#set value of played cells impossibly low so they are never picked
+		scores[played] == -2
 		return scores.argmax()
-	return (np.random.choice(range(boardsize)),np.random.choice(range(boardsize)))
+	#choose random open cell
+	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)])
 
 def Q_update():
 	batch = np.random.choice(np.arange(0,replay_capacity), size=(batch_size))
@@ -29,17 +27,16 @@ def Q_update():
 	scores = evaluate_model_batch(state2_memory[batch])
 	actions = action_memory[batch]
 	rewards = reward_memory[batch]
-	targets = zeros(rewards.size())
+	targets = np.zeros(rewards.size).astype(theano.config.floatX)
 	targets[rewards==1] = 1
-	targets[rewards==0] = -np.min(scores,2)
-	train_model(states,targets,actions)
+	targets[rewards==0] = -np.max(scores)
+	cost = train_model(states,targets,actions)
+	return cost
+
+def action_to_cell(action):
+	cell = np.unravel_index(action, (boardsize,boardsize))
+	return(cell[0]+padding, cell[1]+padding)
 	
-
-
-
-
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
 parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
@@ -84,7 +81,7 @@ else:
 	network = network(batch_size=batch_size)
 
 #zeros used for running network on a single state without modifying batch size
-input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))))
+input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))).astype(theano.config.floatX))
 evaluate_model_single = theano.function(
 	[input_state],
 	network.output[0],
@@ -109,29 +106,30 @@ epsilon = 1e-6
 updates = rmsprop(cost, network.params, alpha, rho, epsilon)
 
 train_model = theano.function(
-	[state_batch],
-	[target_batch],
-	[action_batch],
+	[state_batch,target_batch,action_batch],
 	cost,
+	updates = updates,
 	givens={
 		network.input: state_batch,
-		action_batch: action_batch,
-		target_batch: target_batch
 	}
 )
 
+print "Running episodes..."
+epsilon_q=0.1
 for i in range(numEpisodes):
+	cost = 0
+	num_step = 1
 	#randomly choose who is to move from each position to increase variability in dataset
-	move_parity = np.randint(2)
+	move_parity = np.random.randint(2)
 	#randomly choose starting position from database
-	index = np.randint(numPositions)
-	gameW = copy(positions(index))
+	index = np.random.randint(numPositions)
+	gameW = copy(positions[index])
 	gameB = mirror_game(gameW)
 	while(winner(gameW)==None):
 		action = policy(gameW if move_parity else gameB, evaluate_model_single)
 		action_memory[replay_index] = action
 		state1_memory[replay_index,:,:] = copy(gameW if move_parity else gameB)
-		move_cell = np.unravel_index(action, (boardsize,boardsize) )
+		move_cell = action_to_cell(action)
 		play_cell(gameB, move_cell, white if move_parity else black)
 		play_cell(gameW, cell_m(move_cell), black if move_parity else white)
 		if(not winner(gameW)==None):
@@ -148,7 +146,9 @@ for i in range(numEpisodes):
 			replay_full = True
 			replay_index = 0
 		if(replay_full):
-			Q_update()
+			cost += Q_update()
+		num_step+=1
+	print "Episode", i, "complete, cost: ", cost/num_step
 
 
 
