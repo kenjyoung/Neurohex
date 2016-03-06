@@ -1,10 +1,11 @@
 import sys
 from resistanceAgent import resistanceAgent
+from networkAgent import networkAgent
 from gamestate import gamestate
 version = 0.1
 protocol_version = 2
 class gtpinterface:
-	AGENTS = {"resistance" : resistanceAgent}
+	AGENTS = {"resistance" : resistanceAgent, "network" : networkAgent}
 	"""
 	Interface for using go-text-protocol to control the program
 	Each implemented GTP command returns a string response for the user, along with
@@ -266,7 +267,8 @@ class gtpinterface:
 			return (True, ret)
 		else:
 			try:
-				self.agent = self.AGENTS[args[0]](self.game)
+				self.agent = self.AGENTS[args[0]]()
+				self.agent.set_gamestate(self.game)
 			except KeyError:
 				return (False, "Unknown agent")
 			self.agent_name = args[0]
