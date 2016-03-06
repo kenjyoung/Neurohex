@@ -7,7 +7,6 @@ from inputFormat import *
 from network import network
 import cPickle
 import argparse
-from copy import copy
 
 def policy(state, evaluator):
 	rand = np.random.random()
@@ -16,7 +15,7 @@ def policy(state, evaluator):
 	if(rand>epsilon_q):
 		scores = evaluator(state)
 		#set value of played cells impossibly low so they are never picked
-		scores[played] == -2
+		scores[played] = -2
 		return scores.argmax()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)])
@@ -52,7 +51,7 @@ numPositions = len(positions)
 input_state = T.tensor3('input_state')
 
 state_batch = T.tensor4('state_batch')
-target_batch = T.fvector('target_batch')
+target_batch = T.dvector('target_batch')
 action_batch = T.ivector('action_batch')
 
 
@@ -120,18 +119,18 @@ for i in range(numEpisodes):
 	cost = 0
 	num_step = 1
 	#randomly choose who is to move from each position to increase variability in dataset
-	move_parity = np.random.randint(2)
+	move_parity = np.random.choice([True,False])
 	#randomly choose starting position from database
 	index = np.random.randint(numPositions)
-	gameW = copy(positions[index])
+	gameW = np.copy(positions[index])
 	gameB = mirror_game(gameW)
 	while(winner(gameW)==None):
 		action = policy(gameW if move_parity else gameB, evaluate_model_single)
 		action_memory[replay_index] = action
-		state1_memory[replay_index,:,:] = copy(gameW if move_parity else gameB)
+		state1_memory[replay_index,:,:] = np.copy(gameW if move_parity else gameB)
 		move_cell = action_to_cell(action)
-		play_cell(gameB, move_cell, white if move_parity else black)
-		play_cell(gameW, cell_m(move_cell), black if move_parity else white)
+		play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
+		play_cell(gameB, cell_m(move_cell) if move_parity else move_cell, black if move_parity else white)
 		if(not winner(gameW)==None):
 			#only the player who just moved can win, so if anyone wins the reward is 1
 			#for the current player
@@ -139,7 +138,7 @@ for i in range(numEpisodes):
 		else:
 			reward_memory[replay_index] = 0
 
-		state2_memory[replay_index,:,:] = copy(gameB if move_parity else gameW)
+		state2_memory[replay_index,:,:] = np.copy(gameB if move_parity else gameW)
 		move_parity = not move_parity
 		replay_index+=1
 		if(replay_index>=replay_capacity):
