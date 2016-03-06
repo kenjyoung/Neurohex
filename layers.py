@@ -101,8 +101,8 @@ class SigmoidLayer:
         self.input = input
         W_values = np.asarray(
                 rng.uniform(
-                    low=-10*np.sqrt(6. / (n_in + n_out)),
-                    high=10*np.sqrt(6. / (n_in + n_out)),
+                    low=-np.sqrt(6. / (n_in + n_out)),
+                    high=np.sqrt(6. / (n_in + n_out)),
                     size=(n_in, n_out)
                 ),
                 dtype=theano.config.floatX

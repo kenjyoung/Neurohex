@@ -49,6 +49,7 @@ class gamestate:
 		if(self.board[cell] == self.PLAYERS["none"]):
 			self.board[cell] = self.PLAYERS["white"]
 		else:
+			print self
 			raise ValueError("Cell occupied")
 		#if the placed cell touches a white edge connect it appropriately
 		if(cell[0] == 0):
