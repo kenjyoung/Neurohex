@@ -28,7 +28,7 @@ def Q_update():
 	rewards = reward_memory[batch]
 	targets = np.zeros(rewards.size).astype(theano.config.floatX)
 	targets[rewards==1] = 1
-	targets[rewards==0] = -np.max(scores)
+	targets[rewards==0] = -np.amax(scores, axis=1)[rewards==0]
 	cost = train_model(states,targets,actions)
 	return cost
 
@@ -99,7 +99,7 @@ evaluate_model_batch = theano.function(
 
 cost = T.mean(T.sqr(network.output[T.arange(target_batch.shape[0]),action_batch] - target_batch))
 
-alpha = 0.001
+alpha = 0.01
 rho = 0.9
 epsilon = 1e-6
 updates = rmsprop(cost, network.params, alpha, rho, epsilon)
@@ -146,6 +146,7 @@ for i in range(numEpisodes):
 			replay_index = 0
 		if(replay_full):
 			cost += Q_update()
+			#print state_string(gameW)
 		num_step+=1
 	print "Episode", i, "complete, cost: ", cost/num_step
 
