@@ -61,7 +61,7 @@ target_batch = T.dvector('target_batch')
 action_batch = T.ivector('action_batch')
 
 
-replay_capacity = 100
+replay_capacity = 100000
 
 #replay memory from which updates are drawn
 replay_index = 0
@@ -71,8 +71,8 @@ action_memory = np.zeros(replay_capacity, dtype=np.int8)
 reward_memory = np.zeros(replay_capacity, dtype=bool)
 state2_memory = np.zeros(np.concatenate(([replay_capacity], input_shape)), dtype=bool)
 
-numEpisodes = 100
-batch_size = 10
+numEpisodes = 100000
+batch_size = 32
 
 #if load parameter is passed load a network from a file
 if args.load:
