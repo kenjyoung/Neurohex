@@ -61,7 +61,7 @@ target_batch = T.dvector('target_batch')
 action_batch = T.ivector('action_batch')
 
 
-replay_capacity = 100000
+replay_capacity = 1000
 
 #replay memory from which updates are drawn
 replay_index = 0
@@ -121,40 +121,50 @@ train_model = theano.function(
 
 print "Running episodes..."
 epsilon_q=0.1
-for i in range(numEpisodes):
-	cost = 0
-	num_step = 1
-	#randomly choose who is to move from each position to increase variability in dataset
-	move_parity = np.random.choice([True,False])
-	#randomly choose starting position from database
-	index = np.random.randint(numPositions)
-	gameW = np.copy(positions[index])
-	gameB = mirror_game(gameW)
-	while(winner(gameW)==None):
-		action = policy(gameW if move_parity else gameB, evaluate_model_single)
-		action_memory[replay_index] = action
-		state1_memory[replay_index,:,:] = np.copy(gameW if move_parity else gameB)
-		move_cell = action_to_cell(action)
-		play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
-		play_cell(gameB, cell_m(move_cell) if move_parity else move_cell, black if move_parity else white)
-		if(not winner(gameW)==None):
-			#only the player who just moved can win, so if anyone wins the reward is 1
-			#for the current player
-			reward_memory[replay_index] = 1
-		else:
-			reward_memory[replay_index] = 0
+try:
+	for i in range(numEpisodes):
+		cost = 0
+		num_step = 1
+		#randomly choose who is to move from each position to increase variability in dataset
+		move_parity = np.random.choice([True,False])
+		#randomly choose starting position from database
+		index = np.random.randint(numPositions)
+		gameW = np.copy(positions[index])
+		gameB = mirror_game(gameW)
+		while(winner(gameW)==None):
+			action = policy(gameW if move_parity else gameB, evaluate_model_single)
+			action_memory[replay_index] = action
+			state1_memory[replay_index,:,:] = np.copy(gameW if move_parity else gameB)
+			move_cell = action_to_cell(action)
+			play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
+			play_cell(gameB, cell_m(move_cell) if move_parity else move_cell, black if move_parity else white)
+			if(not winner(gameW)==None):
+				#only the player who just moved can win, so if anyone wins the reward is 1
+				#for the current player
+				reward_memory[replay_index] = 1
+			else:
+				reward_memory[replay_index] = 0
 
-		state2_memory[replay_index,:,:] = np.copy(gameB if move_parity else gameW)
-		move_parity = not move_parity
-		replay_index+=1
-		if(replay_index>=replay_capacity):
-			replay_full = True
-			replay_index = 0
-		if(replay_full):
-			cost += Q_update()
-			#print state_string(gameW)
-		num_step+=1
-	print "Episode", i, "complete, cost: ", cost/num_step
+			state2_memory[replay_index,:,:] = np.copy(gameB if move_parity else gameW)
+			move_parity = not move_parity
+			replay_index+=1
+			if(replay_index>=replay_capacity):
+				replay_full = True
+				replay_index = 0
+			if(replay_full):
+				cost += Q_update()
+				#print state_string(gameW)
+			num_step+=1
+		print "Episode", i, "complete, cost: ", cost/num_step
+except KeyboardInterrupt:
+	#save snapshot of network if we interrupt so we can pickup again later
+	print "saving network..."
+	if args.save:
+		f = file(args.save, 'wb')
+	else:
+		f = file('Q_training.save', 'wb')
+	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+	f.close()
 
 
 
