@@ -6,6 +6,7 @@ import numpy as np
 import numpy.random as rand
 from inputFormat import *
 from network import network
+import matplotlib.pyplot as plt
 import cPickle
 import argparse
 
@@ -26,8 +27,8 @@ datafile.close()
 
 # print "shuffling data... "
 # data_shuffle(scores,positions)
-shared_positions = theano.shared(positions.astype(theano.config.floatX), name="positions")
-shared_scores = theano.shared(scores.astype(theano.config.floatX), name="scores")
+shared_positions = theano.tensor._shared(positions.astype(theano.config.floatX), name="positions", borrow=True)
+shared_scores = theano.tensor._shared(scores.astype(theano.config.floatX), name="scores", borrow=True)
 n_train = shared_scores.get_value(borrow=True).shape[0]
 
 indices = T.ivector("indices") #index of data
@@ -35,8 +36,7 @@ y = T.tensor3('y') #target output score
 
 numEpochs = 100
 iteration = 0
-print_interval = 10
-batch_size = 1
+batch_size = 32
 numBatches = n_train/batch_size
 
 #if load parameter is passed load a network from a file
@@ -83,22 +83,51 @@ evaluate_model = theano.function(
     }
 )
 
+epoch_cost = []
 
 print "Training model on mentor set..."
 indices = range(n_train)
-for epoch in range(numEpochs):
-	print "epoch: ",epoch
-	np.random.shuffle(indices)
-	cost_sum = 0
-	for batch in range(numBatches):
-		cost=train_model(indices[batch*batch_size:(batch+1)*batch_size])
-		if(cost>2):
-			print cost
-			print scores[indices[batch*batch_size:(batch+1)*batch_size]]
-			raise ValueError("unexpected value of cost")
-		cost_sum+=cost
-		iteration+=1
-		print "Cost: ",cost_sum/(batch+1)
+try:
+	for epoch in range(numEpochs):
+		print "epoch: ",epoch
+		np.random.shuffle(indices)
+		cost_sum = 0
+		for batch in range(numBatches):
+			t = time.clock()
+			cost=train_model(indices[batch*batch_size:(batch+1)*batch_size])
+			run_time = time.clock()-t
+			cost_sum+=cost
+			iteration+=1
+			print "Cost: ",cost_sum/(batch+1), " Time per position: ", run_time/(batch_size)
+		epoch_cost.append(cost_sum/(batch+1))
+		plt.plot(epoch_cost)
+		plt.ylabel('cost')
+		plt.xlabel('epoch')
+		plt.draw()
+		plt.pause(0.001)
+		#save snapshot of network every epoch in case something goes wrong
+		print "saving network..."
+		if args.save:
+			f = file(args.save, 'wb')
+		else:
+			f = file('mentor_training.save', 'wb')
+		cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
+		#save learning curve
+		f = file('learning_curve.dat', 'w')
+		for item in epoch_cost:
+			f.write("%f\n" % item)
+		f.close()
+except KeyboardInterrupt:
+	#save snapshot of network if we interrupt so we can pickup again later
+	print "saving network..."
+	if args.save:
+		f = file(args.save, 'wb')
+	else:
+		f = file('mentor_training.save', 'wb')
+	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+	f.close()
+
 
 print "done training!"
 
@@ -107,5 +136,6 @@ if args.save:
 	f = file(args.save, 'wb')
 else:
 	f = file('mentor_network.save', 'wb')
+
 cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 f.close()

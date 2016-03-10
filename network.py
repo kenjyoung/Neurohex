@@ -22,8 +22,8 @@ class network:
 			layer0_D3
 		)
 
-		layer1_D3 = 16
-		layer1_D5 = 0
+		layer1_D3 = 8
+		layer1_D5 = 16
 
 		layer1 = HexConvLayer(
 			rng,
@@ -33,8 +33,8 @@ class network:
 			layer1_D3
 		)
 
-		layer2_D3 = 16
-		layer2_D5 = 0
+		layer2_D3 = 12
+		layer2_D5 = 12
 
 		layer2 = HexConvLayer(
 			rng,
@@ -44,10 +44,44 @@ class network:
 			layer2_D3
 		)
 
+		layer3_D3 = 16
+		layer3_D5 = 8
+
+		layer3 = HexConvLayer(
+			rng,
+			layer2.output,
+			(batch_size, layer2_D3+layer2_D5, input_size, input_size),
+			layer3_D5,
+			layer3_D3
+		)
+
+		layer4_D3 = 20
+		layer4_D5 = 4
+
+		layer4 = HexConvLayer(
+			rng,
+			layer3.output,
+			(batch_size, layer3_D3+layer3_D5, input_size, input_size),
+			layer4_D5,
+			layer4_D3
+		)
+
+		layer5_D3 = 24
+		layer5_D5 = 0
+
+		layer5 = HexConvLayer(
+			rng,
+			layer4.output,
+			(batch_size, layer4_D3+layer4_D5, input_size, input_size),
+			layer5_D5,
+			layer5_D3
+		)
+
+
 		layer3 = SigmoidLayer(
 		 	rng,
-		 	input = layer2.output.flatten(2),
-		 	n_in = (layer2_D3+layer2_D5)*input_size*input_size,
+		 	input = layer5.output.flatten(2),
+		 	n_in = (layer5_D3+layer5_D5)*input_size*input_size,
 		 	n_out = boardsize*boardsize
 		)
 
