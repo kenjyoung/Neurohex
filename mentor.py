@@ -24,14 +24,11 @@ scores = data['scores']
 		
 datafile.close()
 
+positions = positions.astype(theano.config.floatX)
+scores = scores.astype(theano.config.floatX)
+n_train = scores.shape[0]
 
-# print "shuffling data... "
-# data_shuffle(scores,positions)
-shared_positions = theano.tensor._shared(positions.astype(theano.config.floatX), name="positions", borrow=True)
-shared_scores = theano.tensor._shared(scores.astype(theano.config.floatX), name="scores", borrow=True)
-n_train = shared_scores.get_value(borrow=True).shape[0]
-
-indices = T.ivector("indices") #index of data
+positions_batch = T.tensor4('positions_batch')
 y = T.tensor3('y') #target output score
 
 numEpochs = 100
@@ -57,29 +54,27 @@ epsilon = 1e-6
 updates = rmsprop(cost, network.params, alpha, rho, epsilon)
 
 train_model = theano.function(
-    [indices],
+    [positions_batch, y],
     cost,
     updates = updates,
     givens={
-        network.input: shared_positions[indices],
-        y: shared_scores[indices]
+        network.input: positions_batch,
     }
 )
 
 test_model = theano.function(
-    [indices],
+    [positions_batch, y],
     cost,
     givens={
-        network.input: shared_positions[indices],
-        y: shared_scores[indices]
+        network.input: positions_batch,
     }
 )
 
 evaluate_model = theano.function(
-	[indices],
+	[positions_batch],
 	network.output,
 	givens={
-        network.input: shared_positions[indices],
+        network.input: positions_batch,
     }
 )
 
@@ -94,7 +89,9 @@ try:
 		cost_sum = 0
 		for batch in range(numBatches):
 			t = time.clock()
-			cost=train_model(indices[batch*batch_size:(batch+1)*batch_size])
+			p_batch = positions[indices[batch*batch_size:(batch+1)*batch_size]]
+			s_batch = scores[indices[batch*batch_size:(batch+1)*batch_size]]
+			cost=train_model(p_batch, s_batch)
 			run_time = time.clock()-t
 			cost_sum+=cost
 			iteration+=1
