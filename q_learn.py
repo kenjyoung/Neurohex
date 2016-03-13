@@ -16,13 +16,12 @@ def policy(state, evaluator):
 		scores = evaluator(state)
 		#set value of played cells impossibly low so they are never picked
 		scores[played] = -2
-		#print scores.max()
 		return scores.argmax()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)])
 
 def Q_update():
-	batch = np.random.choice(np.arange(0,replay_capacity), size=(batch_size))
+	batch = np.random.choice(np.arange(0,replay_size), size=(batch_size))
 	states1 = state1_memory[batch]
 	states2 = state2_memory[batch]
 	scores = evaluate_model_batch(states2)
@@ -61,7 +60,8 @@ target_batch = T.dvector('target_batch')
 action_batch = T.ivector('action_batch')
 
 
-replay_capacity = 1000
+replay_capacity = 10000
+replay_size = 0
 
 #replay memory from which updates are drawn
 replay_index = 0
@@ -153,8 +153,13 @@ try:
 				replay_index = 0
 			if(replay_full):
 				cost += Q_update()
-				#print state_string(gameW)
-			num_step+=1
+				print state_string(gameW)
+			elif(replay_size > batch_size):
+				replay_size+=1
+				cost += Q_update()
+				print state_string(gameW)
+			else:
+				replay_size+=1
 		print "Episode", i, "complete, cost: ", cost/num_step
 except KeyboardInterrupt:
 	#save snapshot of network if we interrupt so we can pickup again later
