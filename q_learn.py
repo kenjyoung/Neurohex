@@ -7,6 +7,7 @@ from inputFormat import *
 from network import network
 import cPickle
 import argparse
+import time
 
 def policy(state, evaluator):
 	rand = np.random.random()
@@ -124,7 +125,8 @@ epsilon_q=0.1
 try:
 	for i in range(numEpisodes):
 		cost = 0
-		num_step = 1
+		run_time = 0
+		num_step = 0
 		#randomly choose who is to move from each position to increase variability in dataset
 		move_parity = np.random.choice([True,False])
 		#randomly choose starting position from database
@@ -132,6 +134,7 @@ try:
 		gameW = np.copy(positions[index])
 		gameB = mirror_game(gameW)
 		while(winner(gameW)==None):
+			t = time.clock()
 			action = policy(gameW if move_parity else gameB, evaluate_model_single)
 			action_memory[replay_index] = action
 			state1_memory[replay_index,:,:] = np.copy(gameW if move_parity else gameB)
@@ -153,14 +156,16 @@ try:
 				replay_index = 0
 			if(replay_full):
 				cost += Q_update()
-				print state_string(gameW)
+				#print state_string(gameW)
 			elif(replay_size > batch_size):
 				replay_size+=1
 				cost += Q_update()
-				print state_string(gameW)
+				#print state_string(gameW)
 			else:
 				replay_size+=1
-		print "Episode", i, "complete, cost: ", cost/num_step
+			num_step+=1
+			run_time += time.clock()-t
+		print "Episode", i, "complete, cost: ", cost/num_step, " Time per move: ", run_time/num_step
 except KeyboardInterrupt:
 	#save snapshot of network if we interrupt so we can pickup again later
 	print "saving network..."
