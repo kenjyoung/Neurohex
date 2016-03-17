@@ -35,7 +35,7 @@ def neighbors(cell):
 	return [(n[0]+x , n[1]+y) for n in neighbor_patterns\
 		if (0<=n[0]+x and n[0]+x<input_size and 0<=n[1]+y and n[1]+y<input_size)]
 
-def mirror_game(game, size = boardsize):
+def mirror_game(game):
 	m_game = np.zeros(input_shape, dtype=bool)
 	m_game[white]=np.transpose(game[black])
 	m_game[black]=np.transpose(game[white])
@@ -43,6 +43,16 @@ def mirror_game(game, size = boardsize):
 	m_game[east] =np.transpose(game[south])
 	m_game[south]=np.transpose(game[east])
 	m_game[west] =np.transpose(game[north])
+	return m_game
+
+def flip_game(game):
+	m_game = np.zeros(input_shape, dtype=bool)
+	m_game[white] = np.rot90(game[white],2)
+	m_game[black] = np.rot90(game[black],2)
+	m_game[north] = np.rot90(game[south],2)
+	m_game[east]  = np.rot90(game[west],2)
+	m_game[south] = np.rot90(game[north],2)
+	m_game[west]  = np.rot90(game[east],2)
 	return m_game
 
 def new_game(size = boardsize):

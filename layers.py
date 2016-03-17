@@ -73,6 +73,8 @@ class HexConvLayer:
 
         self.params = [self.W5_values, self.W3_values, self.b]
 
+        self.mem_size = (T.prod(self.W5_values.shape)+T.prod(self.W3_values.shape)+T.prod(self.b.shape))*4
+
         self.input = input
 
 class FullyConnectedLayer:
@@ -96,6 +98,8 @@ class FullyConnectedLayer:
 
         self.params = [self.W, self.b]
 
+        self.mem_size = (T.prod(self.W.shape)+T.prod(self.b.shape))*4
+
 class SigmoidLayer:
     def __init__(self, rng, input, n_in, n_out):
         self.input = input
@@ -116,4 +120,6 @@ class SigmoidLayer:
         self.output = T.nnet.sigmoid(T.dot(input, self.W) + self.b)
 
         self.params = [self.W, self.b]
+
+        self.mem_size = (T.prod(self.W.shape)+T.prod(self.b.shape))*4
 
