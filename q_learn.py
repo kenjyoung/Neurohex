@@ -197,12 +197,16 @@ try:
 		move_parity = np.random.choice([True,False])
 		#randomly choose starting position from database
 		index = np.random.randint(numPositions)
-		gameW = flip_game(positions[index])
+		gameW = positions[index]
 		gameB = mirror_game(gameW)
 		while(winner(gameW)==None):
 			t = time.clock()
 			action = epsilon_greedy_policy(gameW if move_parity else gameB, evaluate_model_single)
-			state1 = np.copy(gameW if move_parity else gameB)
+			#randomly flip states to capture symmetry
+			if(np.random.choice([True,False])):
+				state1 = gameW if move_parity else gameB
+			else:
+				state1 = flip_game(gameW if move_parity else gameB)
 			move_cell = action_to_cell(action)
 			play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
 			play_cell(gameB, cell_m(move_cell) if move_parity else move_cell, black if move_parity else white)
@@ -212,10 +216,13 @@ try:
 				reward = 1
 			else:
 				reward = 0
-			state2 = np.copy(gameB if move_parity else gameW)
+			#randomly flip states to capture symmetry
+			if(np.random.choice([True,False]) == True):
+				state2 = gameB if move_parity else gameW
+			else:
+				state2 = flip_game(gameB if move_parity else gameW)
 			move_parity = not move_parity
 			mem.add_entry(state1, action, reward, state2)
-			mem.add_entry(flip_game(state1), flip_action(action), reward, flip_game(state2))
 			if(mem.size > batch_size):
 				cost += Q_update()
 				#print state_string(gameW)
