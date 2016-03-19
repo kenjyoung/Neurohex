@@ -10,6 +10,15 @@ import matplotlib.pyplot as plt
 import cPickle
 import argparse
 
+def save():
+	print "saving network..."
+	if args.save:
+		f = file(args.save, 'wb')
+	else:
+		f = file('mentor_network.save', 'wb')
+	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+	f.close()
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
@@ -33,7 +42,7 @@ y = T.tensor3('y') #target output score
 
 numEpochs = 100
 iteration = 0
-batch_size = 32
+batch_size = 64
 numBatches = n_train/batch_size
 
 #if load parameter is passed load a network from a file
@@ -48,7 +57,7 @@ else:
 
 cost = T.mean(T.sqr(network.output.reshape((batch_size, boardsize, boardsize)) - y))
 
-alpha = 0.0001
+alpha = 0.00001
 rho = 0.9
 epsilon = 1e-6
 updates = rmsprop(cost, network.params, alpha, rho, epsilon)
@@ -103,13 +112,7 @@ try:
 		plt.draw()
 		plt.pause(0.001)
 		#save snapshot of network every epoch in case something goes wrong
-		print "saving network..."
-		if args.save:
-			f = file(args.save, 'wb')
-		else:
-			f = file('mentor_training.save', 'wb')
-		cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
-		f.close()
+		save()
 		#save learning curve
 		f = file('learning_curve.dat', 'w')
 		for item in epoch_cost:
@@ -117,22 +120,13 @@ try:
 		f.close()
 except KeyboardInterrupt:
 	#save snapshot of network if we interrupt so we can pickup again later
-	print "saving network..."
-	if args.save:
-		f = file(args.save, 'wb')
-	else:
-		f = file('mentor_training.save', 'wb')
-	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
-	f.close()
+	save()
+	exit(1)
 
 
 print "done training!"
 
-print "saving network..."
-if args.save:
-	f = file(args.save, 'wb')
-else:
-	f = file('mentor_network.save', 'wb')
+save()
 
 cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 f.close()
