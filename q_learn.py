@@ -15,7 +15,7 @@ def save():
 	if args.save:
 		f = file(args.save, 'wb')
 	else:
-		f = file('Q_training.save', 'wb')
+		f = file('Q_network.save', 'wb')
 	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 	f.close()
 
@@ -29,7 +29,7 @@ def epsilon_greedy_policy(state, evaluator):
 		#set value of played cells impossibly low so they are never picked
 		scores[played] = -2
 		#np.set_printoptions(precision=3, linewidth=100)
-		print scores.max()
+		#print scores.max()
 		return scores.argmax()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)])
@@ -110,9 +110,12 @@ class replay_memory:
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
 parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
-#unused
+#unused so far
 parser.add_argument("--data", "-d", type =str, help="Specify a directory to save/load data for this run.")
 args = parser.parse_args()
+
+#save network every x minutes during training
+save_time = 15
 
 print "loading starting positions... "
 datafile = open("data/scoredPositionsFull.npz", 'r')
@@ -183,7 +186,8 @@ train_model = theano.function(
 )
 
 print "Running episodes..."
-epsilon_q=0.1
+epsilon_q = 0.1
+last_save = time.clock()
 try:
 	for i in range(numEpisodes):
 		cost = 0
@@ -214,11 +218,15 @@ try:
 			mem.add_entry(flip_game(state1), flip_action(action), reward, flip_game(state2))
 			if(mem.size > batch_size):
 				cost += Q_update()
-				print state_string(gameW)
+				#print state_string(gameW)
 			num_step += 1
+			if(time.clock()-last_save > 60*save_time):
+				save()
+				last_save = time.clock()
 		print "Episode", i, "complete, cost: ", cost/num_step, " Time per move: ", run_time/num_step
 except KeyboardInterrupt:
 	#save snapshot of network if we interrupt so we can pickup again later
 	save()
+	exit(1)
 
 save()
