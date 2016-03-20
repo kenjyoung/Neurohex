@@ -85,7 +85,7 @@ class network:
 		 	n_out = boardsize*boardsize
 		)
 
-		self.output = 2*layer10.output-1
+		self.output = 2*layer6.output-1
 
 		self.params = layer0.params + layer1.params + layer2.params +layer3.params + layer4.params + layer5.params + layer6.params
 		self.mem_size = layer1.mem_size + layer2.mem_size + layer3.mem_size + layer4.mem_size + layer5.mem_size + layer6.mem_size
