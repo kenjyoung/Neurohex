@@ -11,8 +11,8 @@ class network:
 		if(not rng): rng = np.random.RandomState(None)
 		self.input = T.tensor4('input') #position matrix
 		self.batch_size = batch_size
-		layer0_D3 = 12
-		layer0_D5 = 20
+		layer0_D3 = 24
+		layer0_D5 = 40
 
 		layer0 = HexConvLayer(
 			rng,
@@ -22,8 +22,8 @@ class network:
 			layer0_D3
 		)
 
-		layer1_D3 = 16
-		layer1_D5 = 16
+		layer1_D3 = 32
+		layer1_D5 = 32
 
 		layer1 = HexConvLayer(
 			rng,
@@ -33,8 +33,8 @@ class network:
 			layer1_D3
 		)
 
-		layer2_D3 = 20
-		layer2_D5 = 12
+		layer2_D3 = 40
+		layer2_D5 = 24
 
 		layer2 = HexConvLayer(
 			rng,
@@ -44,8 +44,8 @@ class network:
 			layer2_D3
 		)
 
-		layer3_D3 = 24
-		layer3_D5 = 8
+		layer3_D3 = 48
+		layer3_D5 = 16
 
 		layer3 = HexConvLayer(
 			rng,
@@ -55,8 +55,8 @@ class network:
 			layer3_D3
 		)
 
-		layer4_D3 = 28
-		layer4_D5 = 4
+		layer4_D3 = 56
+		layer4_D5 = 8
 
 		layer4 = HexConvLayer(
 			rng,
@@ -66,7 +66,7 @@ class network:
 			layer4_D3
 		)
 
-		layer5_D3 = 32
+		layer5_D3 = 64
 		layer5_D5 = 0
 
 		layer5 = HexConvLayer(
@@ -77,7 +77,7 @@ class network:
 			layer5_D3
 		)
 
-		layer6_D3 = 32
+		layer6_D3 = 64
 		layer6_D5 = 0
 
 		layer6 = HexConvLayer(
@@ -88,7 +88,7 @@ class network:
 			layer6_D3
 		)
 
-		layer7_D3 = 32
+		layer7_D3 = 64
 		layer7_D5 = 0
 
 		layer7 = HexConvLayer(
@@ -99,7 +99,7 @@ class network:
 			layer7_D3
 		)
 
-		layer8_D3 = 32
+		layer8_D3 = 64
 		layer8_D5 = 0
 
 		layer8 = HexConvLayer(
@@ -110,19 +110,21 @@ class network:
 			layer8_D3
 		)
 
-		layer9_size = 5000
+		layer9_D3 = 64
+		layer9_D5 = 0
 
-		layer9 = FullyConnectedLayer(
+		layer9 = HexConvLayer(
 			rng,
-		 	input = layer8.output.flatten(2),
-		 	n_in = (layer8_D3+layer8_D5)*input_size*input_size,
-		 	n_out = layer9_size
+			layer8.output,
+			(batch_size, layer8_D3+layer8_D5, input_size, input_size),
+			layer9_D5,
+			layer9_D3
 		)
 
 		layer10 = SigmoidLayer(
 		 	rng,
 		 	input = layer9.output.flatten(2),
-		 	n_in = layer9_size,
+		 	n_in = (layer9_D3+layer9_D5)*input_size*input_size,
 		 	n_out = boardsize*boardsize
 		)
 
