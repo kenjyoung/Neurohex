@@ -1,12 +1,16 @@
--Train convolutional neural network(s) for move analysis in hex (try 13x13 first)
--probably going to try move analysis instead of position as it is potentially more applicable for other purposes
--Train by Deep TD learning of some kind (probably deep Q learning adversarial variant, expected sarsa with softmax policy gradually tuned toward Q-learning?)
--Use something like simple resistance heuristic as a mentor
--Generate around 10,000 games worth of plausible positions using stochastic version of wolve
+x-Train convolutional neural network(s) for move analysis in hex (try 13x13 first)
+x-probably going to try move analysis instead of position as it is potentially more applicable for other purposes
+x-Train by Deep TD learning of some kind (probably deep Q learning adversarial variant, expected sarsa with softmax policy gradually tuned toward Q-learning?)
+x-Use something like simple resistance heuristic as a mentor
+x-Generate around 10,000 games worth of plausible positions using stochastic version of wolve
+x-Use experience replay
+x-Look into means of preserving reflection symmetry (probably just reflect data set)
+x-rotate and change colors so current player is always horizontal (should reduce what has to be learned) this can be done efficiently by maintaining two input matrices during training one of which is the mirror of the other and switching which one is used for training the network each move.
+x-board encoded using opponent cells, player cells and 2 edge connection channels for player cells 
+x-at least one layer of out of bounds cells will be included and colored as the apporpriate edge with edge connection set appropriately (probably 2 layers so 5x5 filters can be placed on the edge, not sure how much if at all this will help however)
+x-do not bother to backpropogate error for filled (unplayable) cells since these can be trivially eliminated anyway and learning them is thus irrelevant
+
 -Use batch normalization
--Use experience replay
--Look into means of preserving reflection symmetry (probably just reflect data set)
--rotate and change colors so current player is always horizontal (should reduce what has to be learned) this can be done efficiently by maintaining two input matrices during training one of which is the mirror of the other and switching which one is used for training the network each move.
--board encoded using opponent cells, player cells and 2 edge connection channels for player cells 
--at least one layer of out of bounds cells will be included and colored as the apporpriate edge with edge connection set appropriately (probably 2 layers so 5x5 filters can be placed on the edge, not sure how much if at all this will help however)
--do not bother to backpropogate error for filled (unplayable) cells since these can be trivially eliminated anyway and learning them is thus irrelevant
+-add channels whihc represent adjacency to each edge in addition to current channels?
+-use position dependent biases?
+-possibly do some kind of residual-network style thing to account for the fact that most relevant information is probably local
