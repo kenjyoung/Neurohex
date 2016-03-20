@@ -30,7 +30,6 @@ def save():
 		f.close()
 
 
-
 def epsilon_greedy_policy(state, evaluator):
 	rand = np.random.random()
 	played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
@@ -44,6 +43,27 @@ def epsilon_greedy_policy(state, evaluator):
 		return scores.argmax(), scores.max()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)]), 0
+
+def softmax(x, t):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp((x - np.max(x))/t)
+    return e_x / e_x.sum()
+
+def softmax_policy(state, evaluator, temperature=1):
+	rand = np.random.random()
+	not_played = np.logical_not(np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
+		      state[black,padding:boardsize+padding,padding:boardsize+padding])).flatten()
+	scores = evaluator(state)
+	prob = softmax(scores[not_played], temperature)
+	tot = 0
+	choice = None
+	for i in range(prob.size):
+		tot += prob[i]
+		if(tot>rand):
+			choice = i
+			break
+	return not_played.nonzero()[0][choice]
+
 
 def softmax(x, t):
     """Compute softmax values for each sets of scores in x."""
@@ -174,12 +194,8 @@ else:
 	costs = []
 	values = []
 
-
-
 numEpisodes = 100000
 batch_size = 64
-
-
 
 #if load parameter is passed load a network from a file
 if args.load:
