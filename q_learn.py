@@ -13,9 +13,13 @@ import os
 def save():
 	print "saving network..."
 	if args.save:
-		f = file(args.save, 'wb')
+		save_name = args.save
 	else:
-		f = file('Q_network.save', 'wb')
+		save_name = "Q_network.save"
+	if args.data:
+		f = file(args.data+"/"+save_name, 'wb')
+	else:
+		f = file(save_name, 'wb')
 	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 	f.close()
 	if args.data:
@@ -167,6 +171,8 @@ if args.data:
 	if not os.path.exists(args.data):
 		os.makedirs(args.data)
 		mem = replay_memory(replay_capacity)
+		costs = []
+		values = []
 	else:
 		if os.path.exists(args.data+"/replay_mem.save"):
 			print "loading replay memory..."

@@ -11,8 +11,8 @@ class network:
 		if(not rng): rng = np.random.RandomState(None)
 		self.input = T.tensor4('input') #position matrix
 		self.batch_size = batch_size
-		layer0_D3 = 24
-		layer0_D5 = 40
+		layer0_D3 = 48
+		layer0_D5 = 80
 
 		layer0 = HexConvLayer(
 			rng,
@@ -22,8 +22,8 @@ class network:
 			layer0_D3
 		)
 
-		layer1_D3 = 32
-		layer1_D5 = 32
+		layer1_D3 = 48
+		layer1_D5 = 48
 
 		layer1 = HexConvLayer(
 			rng,
