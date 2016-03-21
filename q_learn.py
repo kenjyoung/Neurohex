@@ -145,7 +145,6 @@ class replay_memory:
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
 parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
-#unused so far
 parser.add_argument("--data", "-d", type =str, help="Specify a directory to save/load data for this run.")
 args = parser.parse_args()
 

@@ -9,20 +9,30 @@ from network import network
 import matplotlib.pyplot as plt
 import cPickle
 import argparse
+import os
 
 def save():
 	print "saving network..."
 	if args.save:
-		f = file(args.save, 'wb')
+		save_name = args.save
 	else:
-		f = file('mentor_network.save', 'wb')
+		save_name = "mentor_network.save"
+	if args.data:
+		f = file(args.data+"/"+save_name, 'wb')
+	else:
+		f = file(save_name, 'wb')
 	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 	f.close()
+	if args.data:
+		f = file(args.data+"/costs.save","wb")
+		cPickle.dump(costs, f, protocol=cPickle.HIGHEST_PROTOCOL)
+		f.close()
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
 parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
+parser.add_argument("--data", "-d", type =str, help="Specify a directory to save/load data for this run.")
 args = parser.parse_args()
 
 print "loading data... "
@@ -30,6 +40,20 @@ datafile = open("data/scoredPositionsFull.npz", 'r')
 data = np.load(datafile)
 positions = data['positions']
 scores = data['scores']
+
+if args.data:
+	if not os.path.exists(args.data):
+		os.makedirs(args.data)
+		costs = []
+	else:
+		if os.path.exists(args.data+"/costs.save"):
+			f = file(args.data+"/costs.save")
+			costs = cPickle.load(f)
+			f.close
+		else:
+			costs = []
+else:
+	costs = []
 		
 datafile.close()
 
@@ -87,7 +111,7 @@ evaluate_model = theano.function(
     }
 )
 
-epoch_cost = []
+costs = []
 
 print "Training model on mentor set..."
 indices = range(n_train)
@@ -105,8 +129,8 @@ try:
 			cost_sum+=cost
 			iteration+=1
 			print "Cost: ",cost_sum/(batch+1), " Time per position: ", run_time/(batch_size)
-		epoch_cost.append(cost_sum/(batch+1))
-		plt.plot(epoch_cost)
+		costs.append(cost_sum/(batch+1))
+		plt.plot(costs)
 		plt.ylabel('cost')
 		plt.xlabel('epoch')
 		plt.draw()
