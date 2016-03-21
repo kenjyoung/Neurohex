@@ -81,7 +81,7 @@ else:
 
 cost = T.mean(T.sqr(network.output.reshape((batch_size, boardsize, boardsize)) - y))
 
-alpha = 0.00001
+alpha = 0.001
 rho = 0.9
 epsilon = 1e-6
 updates = rmsprop(cost, network.params, alpha, rho, epsilon)
@@ -137,11 +137,6 @@ try:
 		plt.pause(0.001)
 		#save snapshot of network every epoch in case something goes wrong
 		save()
-		#save learning curve
-		f = file('learning_curve.dat', 'w')
-		for item in epoch_cost:
-			f.write("%f\n" % item)
-		f.close()
 except KeyboardInterrupt:
 	#save snapshot of network if we interrupt so we can pickup again later
 	save()
