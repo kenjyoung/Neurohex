@@ -7,7 +7,7 @@ import cPickle
 
 
 class network:
-	def __init__(self, batch_size = 1, rng = None, load_file = None):
+	def __init__(self, batch_size = 1, rng = None, load_file = None, params = None):
 		if(not rng): rng = np.random.RandomState(None)
 		self.input = T.tensor4('input') #position matrix
 		self.batch_size = batch_size
@@ -19,7 +19,8 @@ class network:
 			self.input, 
 			(batch_size, num_channels, input_size, input_size), 
 			layer0_D5, 
-			layer0_D3
+			layer0_D3,
+			params = params[0:3] if params else None
 		)
 
 		layer1_D3 = 48
@@ -30,7 +31,8 @@ class network:
 			layer0.output,
 			(batch_size, layer0_D3+layer0_D5, input_size, input_size),
 			layer1_D5,
-			layer1_D3
+			layer1_D3,
+			params[3:6] if params else None
 		)
 
 		layer2_D3 = 40
@@ -41,7 +43,8 @@ class network:
 			layer1.output,
 			(batch_size, layer1_D3+layer1_D5, input_size, input_size),
 			layer2_D5,
-			layer2_D3
+			layer2_D3,
+			params[6:9] if params else None
 		)
 
 		layer3_D3 = 48
@@ -52,7 +55,8 @@ class network:
 			layer2.output,
 			(batch_size, layer2_D3+layer2_D5, input_size, input_size),
 			layer3_D5,
-			layer3_D3
+			layer3_D3,
+			params[9:12] if params else None
 		)
 
 		layer4_D3 = 56
@@ -63,7 +67,8 @@ class network:
 			layer3.output,
 			(batch_size, layer3_D3+layer3_D5, input_size, input_size),
 			layer4_D5,
-			layer4_D3
+			layer4_D3,
+			params[12:15] if params else None
 		)
 
 		layer5_D3 = 64
@@ -74,7 +79,8 @@ class network:
 			layer4.output,
 			(batch_size, layer4_D3+layer4_D5, input_size, input_size),
 			layer5_D5,
-			layer5_D3
+			layer5_D3,
+			params[15:18] if params else None
 		)
 
 		layer6_D3 = 64
@@ -85,7 +91,8 @@ class network:
 			layer5.output,
 			(batch_size, layer5_D3+layer5_D5, input_size, input_size),
 			layer6_D5,
-			layer6_D3
+			layer6_D3,
+			params[18:21] if params else None
 		)
 
 		layer7_D3 = 64
@@ -96,7 +103,8 @@ class network:
 			layer6.output,
 			(batch_size, layer6_D3+layer6_D5, input_size, input_size),
 			layer7_D5,
-			layer7_D3
+			layer7_D3,
+			params[21:24] if params else None
 		)
 
 		layer8_D3 = 64
@@ -107,7 +115,8 @@ class network:
 			layer7.output,
 			(batch_size, layer7_D3+layer7_D5, input_size, input_size),
 			layer8_D5,
-			layer8_D3
+			layer8_D3,
+			params[24:27] if params else None
 		)
 
 		layer9_D3 = 64
@@ -118,14 +127,16 @@ class network:
 			layer8.output,
 			(batch_size, layer8_D3+layer8_D5, input_size, input_size),
 			layer9_D5,
-			layer9_D3
+			layer9_D3,
+			params[27:30] if params else None
 		)
 
 		layer10 = SigmoidLayer(
 		 	rng,
-		 	input = layer9.output.flatten(2),
-		 	n_in = (layer9_D3+layer9_D5)*input_size*input_size,
-		 	n_out = boardsize*boardsize
+		 	layer9.output.flatten(2),
+		 	(layer9_D3+layer9_D5)*input_size*input_size,
+		 	boardsize*boardsize,
+		 	params[30:32] if params else None
 		)
 
 		self.output = 2*layer10.output-1

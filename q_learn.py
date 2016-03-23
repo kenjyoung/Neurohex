@@ -5,6 +5,7 @@ import numpy as np
 import numpy.random as rand
 from inputFormat import *
 from network import network
+import matplotlib.pyplot as plt
 import cPickle
 import argparse
 import time
@@ -43,7 +44,7 @@ def epsilon_greedy_policy(state, evaluator):
 		#set value of played cells impossibly low so they are never picked
 		scores[played] = -2
 		#np.set_printoptions(precision=3, linewidth=100)
-		print scores.max()
+		#print scores.max()
 		return scores.argmax(), scores.max()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)]), 0
@@ -207,20 +208,21 @@ if args.load:
 	print "loading model..."
 	f = file(args.load, 'rb')
 	network = cPickle.load(f)
-	batch_size = network.batch_size
+	if(network.batch_size):
+		batch_size = network.batch_size
 	f.close()
 else:
 	print "building model..."
-	network = network(batch_size=batch_size)
+	network = network(batch_size=None)
 	print "network size: "+str(network.mem_size.eval())
 
 #zeros used for running network on a single state without modifying batch size
-input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))).astype(theano.config.floatX))
+#input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))).astype(theano.config.floatX))
 evaluate_model_single = theano.function(
 	[input_state],
 	network.output[0],
 	givens={
-        network.input: T.set_subtensor(input_padding[0,:,:,:], input_state),
+        network.input: input_state.dimshuffle('x', 0, 1, 2),
 	}
 )
 
@@ -266,8 +268,8 @@ try:
 		else:
 			gameW = flip_game(positions[index])
 		gameB = mirror_game(gameW)
+		t = time.clock()
 		while(winner(gameW)==None):
-			t = time.clock()
 			action, value = epsilon_greedy_policy(gameW if move_parity else gameB, evaluate_model_single)
 			value_sum+=abs(value)
 			state1 = np.copy(gameW if move_parity else gameB)
@@ -289,15 +291,26 @@ try:
 			mem.add_entry(state1, action, reward, state2)
 			if(mem.size > batch_size):
 				cost += Q_update()
-				print state_string(gameW)
+				#print state_string(gameW)
 			num_step += 1
 			if(time.clock()-last_save > 60*save_time):
 				save()
 				last_save = time.clock()
+				#plt.plot(costs)
+				#plt.ylabel('cost')
+				#plt.xlabel('episode')
+				#plt.draw()
+				#plt.pause(0.001)
+				#plt.plot(values)
+				#plt.ylabel('value')
+				#plt.xlabel('episode')
+				#plt.draw()
+				#plt.pause(0.001)
 		run_time = time.clock() - t
 		print "Episode", i, "complete, cost: ", 0 if num_step == 0 else cost/num_step, " Time per move: ", 0 if num_step == 0 else run_time/num_step, "Average value magnitude: ", 0 if num_step == 0 else value_sum/num_step
 		costs.append(0 if num_step == 0 else cost/num_step)
 		values.append(0 if num_step == 0 else value_sum/num_step)
+
 except KeyboardInterrupt:
 	#save snapshot of network if we interrupt so we can pickup again later
 	save()
