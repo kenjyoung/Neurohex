@@ -13,7 +13,7 @@ import cPickle
 class networkAgent:
 	def __init__(self, state = gamestate(13)):
 		self.state = copy(state)
-		f = file("network.save", 'rb')
+		f = file(os.path.dirname(os.path.realpath(__file__))+"/network.save", 'rb')
 		network = cPickle.load(f)
 		batch_size = network.batch_size
 		f.close()
