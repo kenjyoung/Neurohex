@@ -51,10 +51,10 @@ class HexConvLayer:
         W5 = T.set_subtensor(W5[:,:,:3,4], self.W5_values[:,:,16:])
 
         if(params):
-        	self.b_values = params[2]
+        	self.b = params[2]
         else:
 	        b_values = np.zeros((num_D5_filters+num_D3_filters), dtype=theano.config.floatX)
-	        self.b = theano.shared(value=b_values, borrow=True)
+	    	self.b = theano.shared(value=b_values, borrow=True)
 
         conv_out3 = conv.conv2d(
             input = input[:,:,1:-1,1:-1],

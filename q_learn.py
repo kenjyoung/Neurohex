@@ -213,11 +213,10 @@ if args.load:
 	f.close()
 else:
 	print "building model..."
+	#use batchsize none now so that we can easily use same network for picking single moves and evaluating batches
 	network = network(batch_size=None)
 	print "network size: "+str(network.mem_size.eval())
 
-#zeros used for running network on a single state without modifying batch size
-#input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))).astype(theano.config.floatX))
 evaluate_model_single = theano.function(
 	[input_state],
 	network.output[0],

@@ -74,10 +74,13 @@ if args.load:
 	print "loading model..."
 	f = file(args.load, 'rb')
 	network = cPickle.load(f)
+	if(network.batch_size):
+		batch_size = network.batch_size
 	f.close()
 else:
 	print "building model..."
-	network = network(batch_size=batch_size)
+	#use batchsize none now so that we can easily use same network for picking single moves and evaluating batches
+	network = network(batch_size=None)
 
 cost = T.mean(T.sqr(network.output.reshape((batch_size, boardsize, boardsize)) - y))
 

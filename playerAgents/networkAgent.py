@@ -19,13 +19,11 @@ class networkAgent:
 		f.close()
 
 		input_state = T.tensor3('input_state')
-		#zeros used for running network on a single state without modifying batch size
-		input_padding = theano.shared(np.zeros(np.concatenate(([network.batch_size],input_shape))).astype(theano.config.floatX))
 		self.evaluator = theano.function(
 			[input_state],
 			network.output[0],
 			givens={
-		        network.input: T.set_subtensor(input_padding[0,:,:,:], input_state),
+		        network.input: input_state.dimshuffle('x', 0, 1, 2),
 			}
 		)
 
