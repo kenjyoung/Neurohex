@@ -1,5 +1,4 @@
 from gtpinterface import gtpinterface
-from resistanceAgent import resistanceAgent
 import sys
 
 def main():
