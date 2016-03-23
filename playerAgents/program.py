@@ -7,8 +7,7 @@ def main():
 	Main function, simply sends user input on to the gtp interface and prints
 	responses.
 	"""
-	agent = resistanceAgent()
-	interface = gtpinterface("resistance")
+	interface = gtpinterface("network")
 	while True:
 		command = raw_input()
 		success, response = interface.send_command(command)
