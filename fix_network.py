@@ -14,7 +14,7 @@ f = file(args.source, 'rb')
 old_network = cPickle.load(f)
 f.close()
 
-new_network = network = network(batch_size=None, params = old_network.params)
+new_network = network(batch_size=None, params = old_network.params)
 
 print "saving model..."
 f = file(args.dest, 'wb')

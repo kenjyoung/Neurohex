@@ -7,7 +7,7 @@ import cPickle
 
 
 class network:
-	def __init__(self, batch_size = 1, rng = None, load_file = None, params = None):
+	def __init__(self, batch_size = None, rng = None, load_file = None, params = None):
 		if(not rng): rng = np.random.RandomState(None)
 		self.input = T.tensor4('input') #position matrix
 		self.batch_size = batch_size

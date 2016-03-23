@@ -44,7 +44,7 @@ def epsilon_greedy_policy(state, evaluator):
 		#set value of played cells impossibly low so they are never picked
 		scores[played] = -2
 		#np.set_printoptions(precision=3, linewidth=100)
-		#print scores.max()
+		print scores.max()
 		return scores.argmax(), scores.max()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)]), 0
@@ -290,7 +290,7 @@ try:
 			mem.add_entry(state1, action, reward, state2)
 			if(mem.size > batch_size):
 				cost += Q_update()
-				#print state_string(gameW)
+				print state_string(gameW)
 			num_step += 1
 			if(time.clock()-last_save > 60*save_time):
 				save()

@@ -9,7 +9,7 @@ class HexConvLayer:
         W5_bound = np.sqrt(6. / (19*(input_shape[1] + num_D5_filters)))
 
         if(params):
-        	self.W3_values = params[0]
+        	self.W3_values = params[1]
         else:
 	        self.W3_values = theano.shared(
 	            np.asarray(
@@ -29,7 +29,7 @@ class HexConvLayer:
         W3 = T.set_subtensor(W3[:,:,:2,2], self.W3_values[:,:,5:])
 
         if(params):
-        	self.W5_values = params[1]
+        	self.W5_values = params[0]
         else:
 	        self.W5_values = theano.shared(
 	            np.asarray(
