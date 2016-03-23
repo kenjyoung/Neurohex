@@ -25,7 +25,7 @@ if args.cpu:
 	for param in params:
 		param = T._shared(param.get_value())
 		new_params.append(param)
-params = new_params
+	params = new_params
 
 new_network = network(batch_size=None, params = params)
 
