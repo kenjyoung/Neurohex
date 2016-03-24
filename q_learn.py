@@ -34,6 +34,32 @@ def save():
 		cPickle.dump(values, f, protocol=cPickle.HIGHEST_PROTOCOL)
 		f.close()
 
+def snapshot():
+	if not args.data:
+		return
+	print "saving network snapshot..."
+	index = 0
+	save_name = args.data+"/snapshot_"+str(index)+".save"
+	while os.path.exists(save_name):
+		index+=1
+		save_name = args.data+"/snapshot_"+str(index)+".save"
+	f = file(save_name, 'wb')
+	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+	f.close()
+
+def show_plots():
+	plt.figure(0)
+	plt.plot(costs)
+	plt.ylabel('cost')
+	plt.xlabel('episode')
+	plt.draw()
+	plt.pause(0.001)
+	plt.figure(1)
+	plt.plot(values)
+	plt.ylabel('value')
+	plt.xlabel('episode')
+	plt.draw()
+	plt.pause(0.001)
 
 def epsilon_greedy_policy(state, evaluator):
 	rand = np.random.random()
@@ -48,26 +74,6 @@ def epsilon_greedy_policy(state, evaluator):
 		return scores.argmax(), scores.max()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)]), 0
-
-def softmax(x, t):
-    """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp((x - np.max(x))/t)
-    return e_x / e_x.sum()
-
-def softmax_policy(state, evaluator, temperature=1):
-	rand = np.random.random()
-	not_played = np.logical_not(np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
-		      state[black,padding:boardsize+padding,padding:boardsize+padding])).flatten()
-	scores = evaluator(state)
-	prob = softmax(scores[not_played], temperature)
-	tot = 0
-	choice = None
-	for i in range(prob.size):
-		tot += prob[i]
-		if(tot>rand):
-			choice = i
-			break
-	return not_played.nonzero()[0][choice]
 
 
 def softmax(x, t):
@@ -151,6 +157,8 @@ args = parser.parse_args()
 
 #save network every x minutes during training
 save_time = 30
+#save snapshot of network to unique file every x minutes during training
+snapshot_time = 480
 
 print "loading starting positions... "
 datafile = open("data/scoredPositionsFull.npz", 'r')
@@ -252,6 +260,7 @@ train_model = theano.function(
 print "Running episodes..."
 epsilon_q = 0.1
 last_save = time.clock()
+last_snapshot = time.clock()
 try:
 	for i in range(numEpisodes):
 		cost = 0
@@ -294,17 +303,11 @@ try:
 			num_step += 1
 			if(time.clock()-last_save > 60*save_time):
 				save()
+				show_plots()
 				last_save = time.clock()
-				#plt.plot(costs)
-				#plt.ylabel('cost')
-				#plt.xlabel('episode')
-				#plt.draw()
-				#plt.pause(0.001)
-				#plt.plot(values)
-				#plt.ylabel('value')
-				#plt.xlabel('episode')
-				#plt.draw()
-				#plt.pause(0.001)
+			if(time.clock()-last_snapshot > 60*snapshot_time):
+				snapshot()
+				last_snapshot = time.clock()
 		run_time = time.clock() - t
 		print "Episode", i, "complete, cost: ", 0 if num_step == 0 else cost/num_step, " Time per move: ", 0 if num_step == 0 else run_time/num_step, "Average value magnitude: ", 0 if num_step == 0 else value_sum/num_step
 		costs.append(0 if num_step == 0 else cost/num_step)
