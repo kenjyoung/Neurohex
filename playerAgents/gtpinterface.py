@@ -29,6 +29,7 @@ class gtpinterface:
 		commands["size"] = self.gtp_boardsize
 		commands["clear_board"] = self.gtp_clear
 		commands["play"] = self.gtp_play
+		commands["undo"] = self.gtp_undo
 		commands["genmove"] = self.gtp_genmove
 		commands["showboard"] = self.gtp_show
 		commands["print"] = self.gtp_show
@@ -47,6 +48,7 @@ class gtpinterface:
 			self.agent = self.AGENTS[agent_name]()
 		self.agent.set_gamestate(self.game)
 		self.move_time = 10
+		self.history = []
 
 	def send_command(self, command):
 		"""
@@ -138,6 +140,19 @@ class gtpinterface:
 		self.agent.set_gamestate(self.game)
 		return (True, "")
 
+	def gtp_undo(self,args):
+		"Undo the last move."
+		try:
+			del self.history[-1]
+			self.game = gamestate(self.game.size)
+			for (move, player) in self.history:
+				self.game.set_turn(player)
+				self.game.play(move)
+			self.agent.set_gamestate(self.game)
+		except ValueError:
+			return(False, "Undo failed!")
+		return (True, "")
+
 	def gtp_play(self, args):
 		"""
 		Play a stone of a given colour in a given cell.
@@ -160,20 +175,24 @@ class gtpinterface:
 				if self.game.turn() == gamestate.PLAYERS["white"]:
 					self.game.play((x,y))
 					self.agent.move((x,y))
+					self.history.append(((x,y), gamestate.PLAYERS["white"]))
 					return (True, "")
 				else:
 					self.game.place_white((x,y))
 					self.agent.set_gamestate(self.game)
+					self.history.append(((x,y), gamestate.PLAYERS["white"]))
 					return (True, "")
 
 			elif args[0][0].lower() == 'b':
 				if self.game.turn() == gamestate.PLAYERS["black"]:
 					self.game.play((x,y))
 					self.agent.move((x,y))
+					self.history.append(((x,y), gamestate.PLAYERS["black"]))
 					return (True, "")
 				else:
 					self.game.place_black((x,y))
 					self.agent.set_gamestate(self.game)
+					self.history.append(((x,y), gamestate.PLAYERS["black"]))
 					return (True, "")
 
 			else:
@@ -211,9 +230,10 @@ class gtpinterface:
 			return (False, "The game is already over")
 		try:
 			self.game.play(move)
-		except:
-			print move
+		except ValueError:
+			return (False, "Malformed arguments")
 		self.agent.move(move)
+		self.history.append((move, gamestate.OPPONENT[self.game.turn()]))
 		return (True, chr(ord('a')+move[0])+str(move[1]+1))
 
 	def gtp_time(self, args):
