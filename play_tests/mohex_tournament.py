@@ -23,6 +23,11 @@ class agent:
 		self.program = Program(self.exe,True)
 		self.lock = threading.Lock()
 
+def move_to_cell(move):
+	x =	ord(move[0].lower())-ord('a')
+	y = int(move[1:])-1
+	return (x,y)
+
 def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 	game = gamestate(boardsize)
 	winner = None
@@ -30,8 +35,10 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 	mohex.sendCommand("clear_board")
 	neurohex.sendCommand("clear_board")
 	while(True):
-		move = blackAgent.sendCommand("genmove "+black)
+		move = blackAgent.sendCommand("genmove black").strip()
 		moves.append(move)
+		game.place_black(move_to_cell(move))
+		whiteAgent.sendCommand("play black "+move)
 		if verbose:
 			print(blackAgent.name+" v.s. "+whiteAgent.name)
 			print(game)
@@ -39,8 +46,10 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 			winner = game.winner()
 			break
 		sys.stdout.flush()
-		move = whiteAgent.sendCommand("genmove "+white)
+		move = whiteAgent.sendCommand("genmove white").strip()
 		moves.append(move)
+		game.place_white(move_to_cell(move))
+		blackAgent.sendCommand("play black "+move)
 		if verbose:
 			print(blackAgent.name+" v.s. "+whiteAgent.name)
 			print(game)
