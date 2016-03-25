@@ -65,7 +65,12 @@ args = parser.parse_args()
 
 print("Starting tournament...")
 mohex = agent(mohex_exe)
-mohex.sendCommand("param_mohex max_time "+str(args.time))
+num_games = args.num_games
+if(args.time):
+	time = args.time
+else:
+	time = 5
+mohex.sendCommand("param_mohex max_time "+str(time))
 neurohex = agent(neurohex_exe)
 white_wins = 0
 black_wins = 0
