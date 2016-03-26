@@ -32,8 +32,8 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 	game = gamestate(boardsize)
 	winner = None
 	moves = []
-	mohex.sendCommand("clear_board")
-	neurohex.sendCommand("clear_board")
+	blackAgent.sendCommand("clear_board")
+	whiteAgent.sendCommand("clear_board")
 	while(True):
 		move = blackAgent.sendCommand("genmove black").strip()
 		if( move == "resign"):
@@ -70,7 +70,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 	print(" ".join(moves))
 	return winner
 
-mohex_exe = "/cshome/kjyoung/Summer_2015/benzene-vanilla/src/mohex/mohex 2>/dev/null"
+wolve_exe = "/cshome/kjyoung/Summer_2015/benzene-vanilla/src/wolve/wolve 2>/dev/null"
 neurohex_exe = "/cshome/kjyoung/Summer_2015/Neurohex/playerAgents/program.py 2>/dev/null"
 
 parser = argparse.ArgumentParser(description="Run tournament against mohex and output results.")
@@ -79,21 +79,21 @@ parser.add_argument("--time", "-t", type=int, help="total time allowed for gitke
 args = parser.parse_args()
 
 print("Starting tournament...")
-mohex = agent(mohex_exe)
+wolve = agent(wolve_exe)
 num_games = args.num_games
 if(args.time):
 	time = args.time
 else:
 	time = 5
-mohex.sendCommand("param_mohex max_time "+str(time))
+wolve.sendCommand("param_wolve max_time "+str(time))
 neurohex = agent(neurohex_exe)
 white_wins = 0
 black_wins = 0
 for game in range(num_games):
-	winner = run_game(mohex, neurohex, 13, True)
+	winner = run_game(wolve, neurohex, 13, True)
 	if(winner == gamestate.PLAYERS["white"]):
 		white_wins += 1
-	winner = run_game(neurohex, mohex, 13, True)
+	winner = run_game(neurohex, wolve, 13, True)
 	if(winner == gamestate.PLAYERS["black"]):
 		black_wins += 1
 
