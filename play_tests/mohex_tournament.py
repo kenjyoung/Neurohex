@@ -38,7 +38,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 		move = blackAgent.sendCommand("genmove black").strip()
 		if( move == "resign"):
 			winner = game.PLAYERS["white"]
-			return
+			return winner
 		moves.append(move)
 		game.place_black(move_to_cell(move))
 		whiteAgent.sendCommand("play black "+move)
@@ -52,7 +52,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 		move = whiteAgent.sendCommand("genmove white").strip()
                 if( move == "resign"):
                         winner = game.PLAYERS["black"] 
-                        return
+	                return winner
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent.sendCommand("play black "+move)
