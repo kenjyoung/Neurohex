@@ -36,6 +36,9 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 	neurohex.sendCommand("clear_board")
 	while(True):
 		move = blackAgent.sendCommand("genmove black").strip()
+		if( move == "resign"):
+			winner = game.PLAYERS["white"]
+			return
 		moves.append(move)
 		game.place_black(move_to_cell(move))
 		whiteAgent.sendCommand("play black "+move)
@@ -47,6 +50,9 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 			break
 		sys.stdout.flush()
 		move = whiteAgent.sendCommand("genmove white").strip()
+                if( move == "resign"):
+                        winner = game.PLAYERS["black"] 
+                        return
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent.sendCommand("play black "+move)
@@ -59,7 +65,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 		sys.stdout.flush()
 	winner_name = blackAgent.name if winner == game.PLAYERS["black"] else whiteAgent.name
 	loser_name =  whiteAgent.name if winner == game.PLAYERS["black"] else blackAgent.name
-	print("Game over, " + winner_name+ " ("+game.PLAYER_STR[winner]+") " + "wins against "+loser_name+(" by timeout." if timeout else "."))
+	print("Game over, " + winner_name+ " ("+game.PLAYER_STR[winner]+") " + "wins against "+loser_name)
 	print(game)
 	print(" ".join(moves))
 	return winner
