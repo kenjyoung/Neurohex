@@ -49,6 +49,9 @@ class gtpinterface:
 		self.agent.set_gamestate(self.game)
 		self.move_time = 10
 		self.history = []
+		register = getattr(self.agent, "register", None)
+		if callable(register):
+			register(self)
 
 	def send_command(self, command):
 		"""
