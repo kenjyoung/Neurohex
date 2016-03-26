@@ -130,6 +130,7 @@ class gtpinterface:
 		
 		self.game = gamestate(size)
 		self.agent.set_gamestate(self.game)
+		self.history = []
 		return (True, "")
 
 	def gtp_clear(self, args):
@@ -138,18 +139,20 @@ class gtpinterface:
 		"""
 		self.game = gamestate(self.game.size)
 		self.agent.set_gamestate(self.game)
+		self.history = []
 		return (True, "")
 
 	def gtp_undo(self,args):
 		"Undo the last move."
 		try:
-			del self.history[-1]
+			self.history.pop()
 			self.game = gamestate(self.game.size)
 			for (move, player) in self.history:
 				self.game.set_turn(player)
 				self.game.play(move)
 			self.agent.set_gamestate(self.game)
 		except ValueError:
+			print self.history
 			return(False, "Undo failed!")
 		return (True, "")
 
