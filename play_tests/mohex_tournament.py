@@ -55,7 +55,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
                         return
 		moves.append(move)
 		game.place_white(move_to_cell(move))
-		blackAgent.sendCommand("play black "+move)
+		blackAgent.sendCommand("play white "+move)
 		if verbose:
 			print(blackAgent.name+" v.s. "+whiteAgent.name)
 			print(game)
@@ -93,8 +93,8 @@ for game in range(num_games):
 	winner = run_game(mohex, neurohex, 13, True)
 	if(winner == gamestate.PLAYERS["white"]):
 		white_wins += 1
-	winner = run_game(neurohex, mohex, 13)
-	if(winner == gamestate.PLAYERS["black"], True):
+	winner = run_game(neurohex, mohex, 13, True)
+	if(winner == gamestate.PLAYERS["black"]):
 		black_wins += 1
 
 print "win_rate as white: "+str(white_wins/float(num_games)*100)[0:5]+"%"
