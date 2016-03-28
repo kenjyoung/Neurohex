@@ -38,7 +38,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 		move = blackAgent.sendCommand("genmove black").strip()
 		if( move == "resign"):
 			winner = game.PLAYERS["white"]
-			return
+			return winner
 		moves.append(move)
 		game.place_black(move_to_cell(move))
 		whiteAgent.sendCommand("play black "+move)
@@ -52,7 +52,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 		move = whiteAgent.sendCommand("genmove white").strip()
                 if( move == "resign"):
                         winner = game.PLAYERS["black"] 
-                        return
+	                return winner
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent.sendCommand("play white "+move)
@@ -70,8 +70,8 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 	print(" ".join(moves))
 	return winner
 
-mohex_exe = "/cshome/kjyoung/Summer_2015/benzene-vanilla/src/mohex/mohex"
-neurohex_exe = "/cshome/kjyoung/Summer_2015/Neurohex/playerAgents/program.py"
+mohex_exe = "/cshome/kjyoung/Summer_2015/benzene-vanilla/src/mohex/mohex 2>/dev/null"
+neurohex_exe = "/cshome/kjyoung/Summer_2015/Neurohex/playerAgents/program.py 2>/dev/null"
 
 parser = argparse.ArgumentParser(description="Run tournament against mohex and output results.")
 parser.add_argument("num_games", type=int, help="number of *pairs* of games (one as black, one as white) to play between each pair of agents.")
