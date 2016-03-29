@@ -150,132 +150,137 @@ class networkBN:
 		if(not rng): rng = np.random.RandomState(None)
 		self.input = T.tensor4('input') #position matrix
 		self.batch_size = batch_size
+
+		num_conv_layers = 10
+		conv_layer_D3 = [48,64,80,96,112,128,128,128,128,128]
+		conv_layer_D5 = [80,64,48,32,16,0,0,0,0,0]
+		
 		layer0_D3 = 48
 		layer0_D5 = 80
 
-		layer0 = HexConvLayer(
+		layer0 = HexConvLayerBN(
 			rng,
 			self.input, 
 			(batch_size, num_channels, input_size, input_size), 
 			layer0_D5, 
 			layer0_D3,
-			params = params[0:3] if params else None
+			params = params[0:4] if params else None
 		)
 
-		layer1_D3 = 48
-		layer1_D5 = 48
+		layer1_D3 = 64
+		layer1_D5 = 64
 
-		layer1 = HexConvLayer(
+		layer1 = HexConvLayerBN(
 			rng,
 			layer0.output,
 			(batch_size, layer0_D3+layer0_D5, input_size, input_size),
 			layer1_D5,
 			layer1_D3,
-			params[3:6] if params else None
+			params[4:8] if params else None
 		)
 
-		layer2_D3 = 40
-		layer2_D5 = 24
+		layer2_D3 = 80
+		layer2_D5 = 48
 
-		layer2 = HexConvLayer(
+		layer2 = HexConvLayerBN(
 			rng,
 			layer1.output,
 			(batch_size, layer1_D3+layer1_D5, input_size, input_size),
 			layer2_D5,
 			layer2_D3,
-			params[6:9] if params else None
+			params[8:12] if params else None
 		)
 
-		layer3_D3 = 48
-		layer3_D5 = 16
+		layer3_D3 = 96
+		layer3_D5 = 32
 
-		layer3 = HexConvLayer(
+		layer3 = HexConvLayerBN(
 			rng,
 			layer2.output,
 			(batch_size, layer2_D3+layer2_D5, input_size, input_size),
 			layer3_D5,
 			layer3_D3,
-			params[9:12] if params else None
+			params[12:16] if params else None
 		)
 
-		layer4_D3 = 56
-		layer4_D5 = 8
+		layer4_D3 = 112
+		layer4_D5 = 16
 
-		layer4 = HexConvLayer(
+		layer4 = HexConvLayerBN(
 			rng,
 			layer3.output,
 			(batch_size, layer3_D3+layer3_D5, input_size, input_size),
 			layer4_D5,
 			layer4_D3,
-			params[12:15] if params else None
+			params[16:20] if params else None
 		)
 
-		layer5_D3 = 64
+		layer5_D3 = 128
 		layer5_D5 = 0
 
-		layer5 = HexConvLayer(
+		layer5 = HexConvLayerBN(
 			rng,
 			layer4.output,
 			(batch_size, layer4_D3+layer4_D5, input_size, input_size),
 			layer5_D5,
 			layer5_D3,
-			params[15:18] if params else None
+			params[20:24] if params else None
 		)
 
-		layer6_D3 = 64
+		layer6_D3 = 128
 		layer6_D5 = 0
 
-		layer6 = HexConvLayer(
+		layer6 = HexConvLayerBN(
 			rng,
 			layer5.output,
 			(batch_size, layer5_D3+layer5_D5, input_size, input_size),
 			layer6_D5,
 			layer6_D3,
-			params[18:21] if params else None
+			params[24:28] if params else None
 		)
 
-		layer7_D3 = 64
+		layer7_D3 = 128
 		layer7_D5 = 0
 
-		layer7 = HexConvLayer(
+		layer7 = HexConvLayerBN(
 			rng,
 			layer6.output,
 			(batch_size, layer6_D3+layer6_D5, input_size, input_size),
 			layer7_D5,
 			layer7_D3,
-			params[21:24] if params else None
+			params[28:32] if params else None
 		)
 
-		layer8_D3 = 64
+		layer8_D3 = 128
 		layer8_D5 = 0
 
-		layer8 = HexConvLayer(
+		layer8 = HexConvLayerBN(
 			rng,
 			layer7.output,
 			(batch_size, layer7_D3+layer7_D5, input_size, input_size),
 			layer8_D5,
 			layer8_D3,
-			params[24:27] if params else None
+			params[32:36] if params else None
 		)
 
-		layer9_D3 = 64
+		layer9_D3 = 128
 		layer9_D5 = 0
 
-		layer9 = HexConvLayer(
+		layer9 = HexConvLayerBN(
 			rng,
 			layer8.output,
 			(batch_size, layer8_D3+layer8_D5, input_size, input_size),
 			layer9_D5,
 			layer9_D3,
-			params[27:30] if params else None
+			params[36:40] if params else None
 		)
 
-		layer10 = SigmoidLayer(
+		layer10 = SigmoidLayerBN(
 		 	rng,
 		 	layer9.output.flatten(2),
 		 	(layer9_D3+layer9_D5)*input_size*input_size,
 		 	boardsize*boardsize,
-		 	params[30:32] if params else None
+		 	params[40:43] if params else None
 		)
 
 		self.output = 2*layer10.output-1

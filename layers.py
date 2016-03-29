@@ -86,9 +86,10 @@ class HexConvLayer:
         self.input = input
 
 class HexConvLayerBN:
-    def __init__(self, rng, input, input_shape, num_D5_filters, num_D3_filters, params = None):
+    def __init__(self, rng, input, input_shape, num_D5_filters, num_D3_filters, params = None, alpha = 0.25):
         W3_bound = np.sqrt(6. / (7*(input_shape[1] + num_D3_filters)))
         W5_bound = np.sqrt(6. / (19*(input_shape[1] + num_D5_filters)))
+        self.alpha = alpha
 
         if(params):
         	self.W3_values = params[1]
@@ -154,16 +155,18 @@ class HexConvLayerBN:
         )
 
         self.full_out = T.concatenate([conv_out5, conv_out3], axis=1)
+        mean = self.full_out.mean(axis = (0,2,3))
+		std = self.full_out.std(axis = (0,2,3))
 
         self.alpha = alpha
-    	self.running_mean = theano.shared(np.zeros((num_D5_filters+num_D3_filters), dtype=theano.config.floatX), borrow=True)
-    	self.running_std = theano.shared(np.zeros((num_D5_filters+num_D3_filters), dtype=theano.config.floatX), borrow=True)
+    	running_mean = theano.clone(mean, share_inputs=False)
+        running_std = theano.clone(std, share_inputs=False)
     	self.running_mean.default_update = ((1-self.alpha)*self.running_mean+self.alpha*mean)
     	self.running_std.default_update = ((1-self.alpha)*self.running_std+self.alpha*std)
 
-        self.params = [self.W5_values, self.W3_values, self.b, self.gamma]
+        self.params = [self.W5_values, self.W3_values, self.beta, self.gamma]
 
-        self.mem_size = (T.prod(self.W5_values.shape)+T.prod(self.W3_values.shape)+T.prod(self.b.shape))*4
+        self.mem_size = (T.prod(self.W5_values.shape)+T.prod(self.W3_values.shape)+T.prod(self.beta.shape)+T.prod(self.gamma.shape))*4
 
         self.input = input
 
@@ -180,7 +183,7 @@ class HexConvLayerBN:
 				mean = self.full_out.mean(axis = (0,2,3))
 				std = self.full_out.std(axis = (0,2,3))
 				# include these in computation graph so that their default update will be applied by any function that uses mean and std
-			    # (this idea and much of above implementation borrowed from lasagne)
+			    # (this idea borrowed from lasagne)
 			    mean += 0 * self.running_mean
 			    std += 0 * self.running_std
 				normed_out= batch_normalization(self.full_out, 
@@ -250,4 +253,57 @@ class SigmoidLayer:
 		self.params = [self.W, self.b]
 
 		self.mem_size = (T.prod(self.W.shape)+T.prod(self.b.shape))*4
+
+class SigmoidLayerBN:
+    def __init__(self, rng, input, n_in, n_out, params = None, alpha = 0.25):
+		self.input = input
+		if(params):
+			self.W = params[0]
+		else:
+		    W_values = np.asarray(
+		            rng.uniform(
+		                low=-np.sqrt(6. / (n_in + n_out)),
+		                high=np.sqrt(6. / (n_in + n_out)),
+		                size=(n_in, n_out)
+		            ),
+		            dtype=theano.config.floatX
+		        )
+		    self.W = theano.shared(value=W_values, name='W', borrow=True)
+
+		if(params):
+			self.beta = params[1]
+			self.gamma = params[2]
+		else:
+		    self.beta = theano.shared(np.zeros((n_out), dtype=theano.config.floatX), name='b', borrow=True)
+		    self.gamma = theano.shared(np.zeros((n_out), dtype=theano.config.floatX), name='b', borrow=True)
+
+		self.output = T.dot(self.input, self.W)
+
+		self.params = [self.W, self.beta, self.gamma]
+
+		self.mem_size = (T.prod(self.W.shape)+T.prod(self.b.shape))*4
+
+	def get_output(self, deterministic = False):
+	    	#test time output
+	    	if(deterministic):
+	        	normed_out= batch_normalization(self.output, 
+							self.gamma,
+							self.beta, 
+							self.running_mean, 
+							self.running_std)
+	        #training time output
+			else:
+				mean = self.full_out.mean()
+				std = self.full_out.std()
+				# include these in computation graph so that their default update will be applied by any function that uses mean and std
+			    # (this idea borrowed from lasagne)
+			    mean += 0 * self.running_mean
+			    std += 0 * self.running_std
+				normed_out= batch_normalization(self.output, 
+							self.gamma,
+							self.beta, 
+							mean, 
+							std)
+			return T.nnet.sigmoid(normed_out)
+
 
