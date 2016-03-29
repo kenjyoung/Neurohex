@@ -23,8 +23,8 @@ class network:
 			params = params[0:3] if params else None
 		)
 
-		layer1_D3 = 48
-		layer1_D5 = 48
+		layer1_D3 = 64
+		layer1_D5 = 64
 
 		layer1 = HexConvLayer(
 			rng,
@@ -35,8 +35,8 @@ class network:
 			params[3:6] if params else None
 		)
 
-		layer2_D3 = 40
-		layer2_D5 = 24
+		layer2_D3 = 80
+		layer2_D5 = 48
 
 		layer2 = HexConvLayer(
 			rng,
@@ -47,8 +47,8 @@ class network:
 			params[6:9] if params else None
 		)
 
-		layer3_D3 = 48
-		layer3_D5 = 16
+		layer3_D3 = 96
+		layer3_D5 = 32
 
 		layer3 = HexConvLayer(
 			rng,
@@ -59,8 +59,8 @@ class network:
 			params[9:12] if params else None
 		)
 
-		layer4_D3 = 56
-		layer4_D5 = 8
+		layer4_D3 = 112
+		layer4_D5 = 16
 
 		layer4 = HexConvLayer(
 			rng,
@@ -71,7 +71,7 @@ class network:
 			params[12:15] if params else None
 		)
 
-		layer5_D3 = 64
+		layer5_D3 = 128
 		layer5_D5 = 0
 
 		layer5 = HexConvLayer(
@@ -83,7 +83,7 @@ class network:
 			params[15:18] if params else None
 		)
 
-		layer6_D3 = 64
+		layer6_D3 = 128
 		layer6_D5 = 0
 
 		layer6 = HexConvLayer(
@@ -95,7 +95,7 @@ class network:
 			params[18:21] if params else None
 		)
 
-		layer7_D3 = 64
+		layer7_D3 = 128
 		layer7_D5 = 0
 
 		layer7 = HexConvLayer(
@@ -107,7 +107,7 @@ class network:
 			params[21:24] if params else None
 		)
 
-		layer8_D3 = 64
+		layer8_D3 = 128
 		layer8_D5 = 0
 
 		layer8 = HexConvLayer(
@@ -119,7 +119,7 @@ class network:
 			params[24:27] if params else None
 		)
 
-		layer9_D3 = 64
+		layer9_D3 = 128
 		layer9_D5 = 0
 
 		layer9 = HexConvLayer(
