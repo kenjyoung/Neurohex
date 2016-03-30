@@ -47,15 +47,19 @@ def snapshot():
 	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 	f.close()
 
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0)) 
+    return (cumsum[N:] - cumsum[:-N]) / N 
+
 def show_plots():
 	plt.figure(0)
-	plt.plot(costs)
+	plt.plot(running_mean(costs,50))
 	plt.ylabel('cost')
 	plt.xlabel('episode')
 	plt.draw()
 	plt.pause(0.001)
 	plt.figure(1)
-	plt.plot(values)
+	plt.plot(running_mean(values,50))
 	plt.ylabel('value')
 	plt.xlabel('episode')
 	plt.draw()
@@ -70,7 +74,7 @@ def epsilon_greedy_policy(state, evaluator):
 		#set value of played cells impossibly low so they are never picked
 		scores[played] = -2
 		#np.set_printoptions(precision=3, linewidth=100)
-		print scores.max()
+		#print scores.max()
 		return scores.argmax(), scores.max()
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)]), 0
@@ -94,7 +98,7 @@ def softmax_policy(state, evaluator, temperature=1):
 		if(tot>rand):
 			choice = i
 			break
-	return not_played.nonzero()[0][choice]
+	return not_played.nonzero()[0][choice], scores.max()
 
 
 def Q_update():
@@ -158,7 +162,7 @@ args = parser.parse_args()
 #save network every x minutes during training
 save_time = 30
 #save snapshot of network to unique file every x minutes during training
-snapshot_time = 480
+snapshot_time = 240
 
 print "loading starting positions... "
 datafile = open("data/scoredPositionsFull.npz", 'r')
@@ -261,6 +265,7 @@ print "Running episodes..."
 epsilon_q = 0.1
 last_save = time.clock()
 last_snapshot = time.clock()
+show_plots()
 try:
 	for i in range(numEpisodes):
 		cost = 0
@@ -299,7 +304,7 @@ try:
 			mem.add_entry(state1, action, reward, state2)
 			if(mem.size > batch_size):
 				cost += Q_update()
-				print state_string(gameW)
+				#print state_string(gameW)
 			num_step += 1
 			if(time.clock()-last_save > 60*save_time):
 				save()
