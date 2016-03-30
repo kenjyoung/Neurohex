@@ -22,6 +22,9 @@ def cell(move):
 	y = int(move[1:])-1+padding
 	return (x,y)
 
+def move(cell):
+	return chr(ord('a')+cell[0])+str(cell[1]+1)
+
 #cell of the mirrored move
 def cell_m(cell):
 	return (cell[1],cell[0])
