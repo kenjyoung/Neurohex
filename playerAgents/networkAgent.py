@@ -41,6 +41,9 @@ class networkAgent:
 		out_str = "gogui-gfx:\ndfpn\nVAR\nLABEL "
 		for i in range(len(self.scores)):
 			cell = np.unravel_index(i, (boardsize,boardsize))
+			toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
+			if(toplay == black):
+				cell = cell_m(cell)
 			out_str+= chr(ord('a')+cell[0])+str(cell[1]+1)+" @"+str(self.scores[i])[0:6]+"@ "
 		out_str+="\nTEXT scores\n"
 		print(out_str)
