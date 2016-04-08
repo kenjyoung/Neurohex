@@ -279,14 +279,14 @@ class policy_network:
 		 	params[30:32] if params else None
 		)
 
-		not_played = np.logical_not(np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
-		      state[black,padding:boardsize+padding,padding:boardsize+padding])).flatten()
+		not_played = T.and_(T.eq(self.input[:, white, padding:boardsize+padding, padding:boardsize+padding].flatten(2),0),\
+		      	T.eq(self.input[:, black, padding:boardsize+padding, padding:boardsize+padding].flatten(2),0))
 
-		playable_output = T.zeros(boardsize*boardsize)
+		playable_output = T.nnet.softmax(layer10.output[not_played.nonzero()])
 
-		playable_output[not_played] = layer10.output[not_played]
+		output = T.switch(not_played, layer10.output, -1*np.inf)
 
-		self.output = T.nnet.softmax(playable_output)
+		self.output = T.nnet.softmax(output)
 
 		self.params = layer0.params + layer1.params + layer2.params +layer3.params + layer4.params + layer5.params + layer6.params+ layer7.params + layer8.params + layer9.params + layer10.params
 
