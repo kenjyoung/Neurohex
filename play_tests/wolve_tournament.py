@@ -76,6 +76,10 @@ neurohex_exe = "/cshome/kjyoung/Summer_2015/Neurohex/playerAgents/program.py 2>/
 parser = argparse.ArgumentParser(description="Run tournament against mohex and output results.")
 parser.add_argument("num_games", type=int, help="number of *pairs* of games (one as black, one as white) to play between each pair of agents.")
 parser.add_argument("--time", "-t", type=int, help="total time allowed for gitkeach move in seconds.")
+parser.add_argument("--verbose", "-v", dest="verbose", action='store_const',
+					const=True, default=False,
+					help="print board after each move.")
+
 args = parser.parse_args()
 
 print("Starting tournament...")
@@ -90,10 +94,10 @@ neurohex = agent(neurohex_exe)
 white_wins = 0
 black_wins = 0
 for game in range(num_games):
-	winner = run_game(wolve, neurohex, 13, True)
+	winner = run_game(wolve, neurohex, 13, args.verbose)
 	if(winner == gamestate.PLAYERS["white"]):
 		white_wins += 1
-	winner = run_game(neurohex, wolve, 13, True)
+	winner = run_game(neurohex, wolve, 13, args.verbose)
 	if(winner == gamestate.PLAYERS["black"]):
 		black_wins += 1
 
