@@ -4,7 +4,7 @@ from theano import tensor as T
 import numpy as np
 import numpy.random as rand
 from inputFormat import *
-from network import network
+from network import network, policy_network
 import matplotlib.pyplot as plt
 import cPickle
 import argparse
@@ -12,16 +12,22 @@ import time
 import os
 
 def save():
-	print "saving network..."
-	if args.save:
-		save_name = args.save
-	else:
-		save_name = "Q_network.save"
+	print "saving Q-network..."
+	save_name = "Q_network.save"
 	if args.data:
 		f = file(args.data+"/"+save_name, 'wb')
 	else:
 		f = file(save_name, 'wb')
 	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+	f.close()
+
+	print "saving P-network..."
+	save_name = "P_network.save"
+	if args.data:
+		f = file(args.data+"/"+save_name, 'wb')
+	else:
+		f = file(save_name, 'wb')
+	cPickle.dump(policy_network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 	f.close()
 	if args.data:
 		f = file(args.data+"/replay_mem.save", 'wb')
@@ -37,12 +43,22 @@ def save():
 def snapshot():
 	if not args.data:
 		return
-	print "saving network snapshot..."
+	print "saving Q-network snapshot..."
 	index = 0
-	save_name = args.data+"/snapshot_"+str(index)+".save"
+	save_name = args.data+"/Q_snapshot_"+str(index)+".save"
 	while os.path.exists(save_name):
 		index+=1
-		save_name = args.data+"/snapshot_"+str(index)+".save"
+		save_name = args.data+"/Q_snapshot_"+str(index)+".save"
+	f = file(save_name, 'wb')
+	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
+	f.close()
+
+	print "saving P-network snapshot..."
+	index = 0
+	save_name = args.data+"/P_snapshot_"+str(index)+".save"
+	while os.path.exists(save_name):
+		index+=1
+		save_name = args.data+"/P_snapshot_"+str(index)+".save"
 	f = file(save_name, 'wb')
 	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
 	f.close()
@@ -53,13 +69,13 @@ def running_mean(x, N):
 
 def show_plots():
 	plt.figure(0)
-	plt.plot(running_mean(costs,50))
+	plt.plot(running_mean(costs,200))
 	plt.ylabel('cost')
 	plt.xlabel('episode')
 	plt.draw()
 	plt.pause(0.001)
 	plt.figure(1)
-	plt.plot(running_mean(values,50))
+	plt.plot(running_mean(values,200))
 	plt.ylabel('value')
 	plt.xlabel('episode')
 	plt.draw()
@@ -89,7 +105,7 @@ def selector_policy(state, selector):
 		if(tot>rand):
 			choice = i
 			break
-	return prob[choice]
+	return choice, prob[choice] 
 
 
 def softmax(x, t):
@@ -119,7 +135,7 @@ def QP_update():
 	policy = get_policy_batch(states2)
 	targets = np.zeros(rewards.size).astype(theano.config.floatX)
 	targets[rewards==1] = 1
-	targets[rewards==0] = -T.dot(policy,scores)
+	targets[rewards==0] = -np.sum(policy*scores,1)[rewards==0]
 	cost, output = train_Q_model(states1, targets, actions)
 	train_P_model(states1, output)
 	return cost
@@ -164,8 +180,8 @@ class replay_memory:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
-parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
+parser.add_argument("--qnet", "-q", type=str, help="Specify a file with a prebuilt Qnetwork to load.")
+parser.add_argument("--pnet", "-p", type=str, help="Specify a file with a prebuilt Pnetwork to load.")
 parser.add_argument("--data", "-d", type =str, help="Specify a directory to save/load data for this run.")
 args = parser.parse_args()
 
@@ -186,7 +202,7 @@ input_state = T.tensor3('input_state')
 state_batch = T.tensor4('state_batch')
 target_batch = T.dvector('target_batch')
 action_batch = T.ivector('action_batch')
-score_batch = T.tensor3('score_batch')
+score_batch = T.matrix('score_batch')
 
 replay_capacity = 100000
 
@@ -227,18 +243,32 @@ numEpisodes = 100000
 batch_size = 64
 
 #if load parameter is passed load a network from a file
-if args.load:
-	print "loading model..."
-	f = file(args.load, 'rb')
+if args.qnet:
+	print "loading Q-network..."
+	f = file(args.qnet, 'rb')
 	network = cPickle.load(f)
 	if(network.batch_size):
 		batch_size = network.batch_size
 	f.close()
 else:
-	print "building model..."
+	print "building Q-network..."
 	#use batchsize none now so that we can easily use same network for picking single moves and evaluating batches
 	network = network(batch_size=None)
 	print "network size: "+str(network.mem_size.eval())
+
+#if load parameter is passed load a network from a file
+if args.pnet:
+	print "loading P-network..."
+	f = file(args.pnet, 'rb')
+	policy_network = cPickle.load(f)
+	if(policy_network.batch_size):
+		batch_size = policy_network.batch_size
+	f.close()
+else:
+	print "building P-network..."
+	#use batchsize none now so that we can easily use same network for picking single moves and evaluating batches
+	policy_network = policy_network(batch_size=None)
+	print "network size: "+str(policy_network.mem_size.eval())
 
 evaluate_model_single = theano.function(
 	[input_state],
@@ -258,7 +288,7 @@ evaluate_model_batch = theano.function(
 
 get_policy_single = theano.function(
 	[input_state],
-	policy_network.output,
+	policy_network.output[0],
 	givens={
 		policy_network.input: input_state.dimshuffle('x', 0, 1, 2)
 	}
@@ -268,18 +298,18 @@ get_policy_batch = theano.function(
 	[state_batch],
 	policy_network.output,
 	givens={
-        policy_ network.input: state_batch,
+        policy_network.input: state_batch,
 	}
 )
 
 Q_cost = T.mean(T.sqr(network.output[T.arange(target_batch.shape[0]),action_batch] - target_batch))
-P_cost = T.dot(policy_network.output, score_batch)
+P_cost = T.mean(T.sum(policy_network.output*score_batch, 1))
 
 alpha = 0.001
 rho = 0.9
 epsilon = 1e-6
 Q_updates = rmsprop(Q_cost, network.params, alpha, rho, epsilon)
-P_updates = rmsprop(P_cost, network.params, alpha, rho, epsilon)
+P_updates = rmsprop(P_cost, policy_network.params, alpha, rho, epsilon)
 
 train_Q_model = theano.function(
 	[state_batch,target_batch,action_batch],
@@ -298,7 +328,7 @@ train_P_model = theano.function(
 		policy_network.input: state_batch
 	}
 
-	)
+)
 
 print "Running episodes..."
 epsilon_q = 0.1
@@ -322,7 +352,7 @@ try:
 		gameB = mirror_game(gameW)
 		t = time.clock()
 		while(winner(gameW)==None):
-			action = selector_policy(gameW if move_parity else gameB, get_policy_single)
+			action, value = selector_policy(gameW if move_parity else gameB, get_policy_single)
 			value_sum+=abs(value)
 			state1 = np.copy(gameW if move_parity else gameB)
 			move_cell = action_to_cell(action)
@@ -343,7 +373,7 @@ try:
 			mem.add_entry(state1, action, reward, state2)
 			if(mem.size > batch_size):
 				cost += QP_update()
-				#print state_string(gameW)
+				print state_string(gameW)
 			num_step += 1
 			if(time.clock()-last_save > 60*save_time):
 				save()
