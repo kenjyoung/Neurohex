@@ -10,6 +10,8 @@ import cPickle
 import argparse
 import time
 import os
+from program import Program
+import threading
 
 class agent:
 	def __init__(self, exe):
@@ -136,8 +138,8 @@ def action_to_cell(action):
 	return(cell[0]+padding, cell[1]+padding)
 
 def move_to_action(move):
-	cell = cell(move)
-	action = cell[0]+boardsize*cell[1]
+	move_cell = cell(move)
+	return move_cell[1]-padding+boardsize*(move_cell[0]-padding)
 
 def flip_action(action):
 	return boardsize*boardsize-1-action
@@ -173,7 +175,7 @@ class replay_memory:
 		rewards = self.reward_memory[batch]
 		return (states1, actions, rewards, states2)
 
-mohex_exe = "/cshome/kjyoung/Summer_2015/benzene-vanilla/src/mohex/mohex 2>/dev/null"
+mohex_exe = "/home/kenny/Hex/benzene-vanilla/benzene/src/mohex/mohex 2>/dev/null"
 mohex = agent(mohex_exe)
 #set search time for mohex to 1s
 mohex.sendCommand("param_mohex max_time 1")
@@ -185,9 +187,9 @@ parser.add_argument("--data", "-d", type =str, help="Specify a directory to save
 args = parser.parse_args()
 
 #save network every x minutes during training
-save_time = 30
+save_time = 60
 #save snapshot of network to unique file every x minutes during training
-snapshot_time = 240
+snapshot_time = 480
 
 print "loading starting positions... "
 datafile = open("data/scoredPositionsFull.npz", 'r')
@@ -287,7 +289,8 @@ train_model = theano.function(
 )
 
 print "Running episodes..."
-epsilon_q = 0.1
+#try zero epsilon for this as we can simply learn from mohexs' moves to some degree
+epsilon_q = 0.0
 last_save = time.clock()
 last_snapshot = time.clock()
 show_plots()
@@ -298,23 +301,36 @@ try:
 		value_sum = 0
 		#randomly choose who is to move from each position to increase variability in dataset
 		move_parity = np.random.choice([True,False])
-		#start game from open board each time
+		#start game with random move from open board each time
 		gameW = new_game()
-		gameB = new_game()
+		move_cell = action_to_cell(np.random.choice(np.arange(boardsize*boardsize)))
+		play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
+		gameB = mirror_game(gameW)
 		mohex.sendCommand("clear_board")
+		mohex.sendCommand("play "+("black " if move_parity else "white ")+(move(cell_m(move_cell)) if move_parity else move(move_cell)))
+		move_parity = not move_parity
 		t = time.clock()
-		while(winner(gameW)==None):
+		resign_flag = False
+		while(winner(gameW)==None and not resign_flag):
 			if(move_parity):
 				action, value = epsilon_greedy_policy(gameW, evaluate_model_single)
 				mohex.sendCommand("play black "+move(cell_m(action_to_cell(action))))
 				value_sum+=abs(value)
 			else:
-				action = move_to_action(mohex.sendCommand("genmove white").strip())
+				move_str = mohex.sendCommand("genmove white").strip()
+				if move_str == "resign":
+					resign_flag = True
+				else:
+					action = move_to_action(move_str)
 			state1 = np.copy(gameW if move_parity else gameB)
-			move_cell = action_to_cell(action)
-			play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
-			play_cell(gameB, cell_m(move_cell) if move_parity else move_cell, black if move_parity else white)
-			if(not winner(gameW)==None):
+			if(not resign_flag):
+				move_cell = action_to_cell(action)
+				play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
+				play_cell(gameB, cell_m(move_cell) if move_parity else move_cell, black if move_parity else white)
+			print state_string(gameW)
+			if resign_flag:
+				reward = -1
+			elif(not winner(gameW)==None):
 				#only the player who just moved can win, so if anyone wins the reward is 1
 				#for the current player
 				reward = 1
@@ -329,7 +345,6 @@ try:
 			mem.add_entry(state1, action, reward, state2)
 			if(mem.size > batch_size):
 				cost += Q_update()
-				print state_string(gameW)
 			num_step += 1
 			if(time.clock()-last_save > 60*save_time):
 				save()
