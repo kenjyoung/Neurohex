@@ -94,6 +94,7 @@ white_wins = 0
 black_wins = 0
 for game in range(num_games):
 	mohex.reconnect()
+	mohex.sendCommand("param_mohex max_time "+str(time))
 	winner = run_game(mohex, neurohex, 13, args.verbose)
 	if(winner == gamestate.PLAYERS["white"]):
 		white_wins += 1
