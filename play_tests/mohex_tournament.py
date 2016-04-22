@@ -28,12 +28,32 @@ def move_to_cell(move):
 	y = int(move[1:])-1
 	return (x,y)
 
-def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
+def run_game(blackAgent, whiteAgent, boardsize, verbose = False, opening = None):
 	game = gamestate(boardsize)
 	winner = None
 	moves = []
-	mohex.sendCommand("clear_board")
-	neurohex.sendCommand("clear_board")
+	blackAgent.sendCommand("clear_board")
+	whiteAgent.sendCommand("clear_board")
+	if opening:
+		game.place_black(move_to_cell(opening))
+		blackAgent.sendCommand("play black "+opening)
+		whiteAgent.sendCommand("play black "+opening)
+		sys.stdout.flush()
+		move = whiteAgent.sendCommand("genmove white").strip()
+        if( move == "resign"):
+            winner = game.PLAYERS["black"] 
+            return winner
+		moves.append(move)
+		game.place_white(move_to_cell(move))
+		blackAgent.sendCommand("play white "+move)
+		if verbose:
+			print(blackAgent.name+" v.s. "+whiteAgent.name)
+			print(game)
+		if(game.winner() != game.PLAYERS["none"]):
+			winner = game.winner()
+			break
+		sys.stdout.flush()
+
 	while(True):
 		move = blackAgent.sendCommand("genmove black").strip()
 		if( move == "resign"):
@@ -50,9 +70,9 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False):
 			break
 		sys.stdout.flush()
 		move = whiteAgent.sendCommand("genmove white").strip()
-                if( move == "resign"):
-                        winner = game.PLAYERS["black"] 
-	                return winner
+        if( move == "resign"):
+            winner = game.PLAYERS["black"] 
+            return winner
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent.sendCommand("play white "+move)
@@ -79,6 +99,9 @@ parser.add_argument("--time", "-t", type=int, help="total time allowed for gitke
 parser.add_argument("--verbose", "-v", dest="verbose", action='store_const',
 					const=True, default=False,
 					help="print board after each move.")
+parser.add_argument("--all", "-a", dest="all_openings", action='store_const',
+					const=True, default=False,
+					help="run games over every board opening.")
 args = parser.parse_args()
 
 print("Starting tournament...")
@@ -92,15 +115,30 @@ mohex.sendCommand("param_mohex max_time "+str(time))
 neurohex = agent(neurohex_exe)
 white_wins = 0
 black_wins = 0
-for game in range(num_games):
-	mohex.reconnect()
-	mohex.sendCommand("param_mohex max_time "+str(time))
-	winner = run_game(mohex, neurohex, 13, args.verbose)
-	if(winner == gamestate.PLAYERS["white"]):
-		white_wins += 1
-	winner = run_game(neurohex, mohex, 13, args.verbose)
-	if(winner == gamestate.PLAYERS["black"]):
-		black_wins += 1
+if(args.all_openings):
+	for game in range(num_games):
+		for x in range(boardsize):
+			for y in range(boardsize):
+				opening = chr(ord('a')+x+str(y+1)
+				mohex.reconnect()
+				mohex.sendCommand("param_mohex max_time "+str(time))
+				winner = run_game(mohex, neurohex, 13, args.verbose, opening)
+				if(winner == gamestate.PLAYERS["white"]):
+					white_wins += 1
+				winner = run_game(neurohex, mohex, 13, args.verbose, opening)
+				if(winner == gamestate.PLAYERS["black"]):
+					black_wins += 1
+else:
+	for game in range(num_games):
+		mohex.reconnect()
+		mohex.sendCommand("param_mohex max_time "+str(time))
+		winner = run_game(mohex, neurohex, 13, args.verbose)
+		if(winner == gamestate.PLAYERS["white"]):
+			white_wins += 1
+		winner = run_game(neurohex, mohex, 13, args.verbose)
+		if(winner == gamestate.PLAYERS["black"]):
+			black_wins += 1
+
 
 print "win_rate as white: "+str(white_wins/float(num_games)*100)[0:5]+"%"
 print "win_rate as black: "+str(black_wins/float(num_games)*100)[0:5]+"%"
