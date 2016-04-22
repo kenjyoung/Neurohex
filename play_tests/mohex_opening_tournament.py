@@ -32,26 +32,31 @@ def run_game(blackAgent1, blackAgent2, whiteAgent1, whiteAgent2, num_moves, boar
 	game = gamestate(boardsize)
 	winner = None
 	moves = []
-	mohex.sendCommand("clear_board")
-	neurohex.sendCommand("clear_board")
+	blackAgent1.sendCommand("clear_board")
+	if(blackAgent2): blackAgent2.sendCommand("clear_board")
+	whiteAgent1.sendCommand("clear_board")
+	if(whiteAgent2): whiteAgent2.sendCommand("clear_board")
 	move_count = 0
 	while(True):
 		move_count +=1
 		if(move_count <= num_moves):
 			move = blackAgent1.sendCommand("genmove black").strip()
-			blackAgent2.sendCommand("play black "+move)
+			if(blackAgent2): blackAgent2.sendCommand("play black "+move)
 		else:
-			move = blackAgent2.sendCommand("genmove black").strip()
-			blackAgent1.sendCommand("play black "+move)
+			if(blackAgent2): 
+				move = blackAgent2.sendCommand("genmove black").strip()
+				blackAgent1.sendCommand("play black "+move)
+			else:
+				move = blackAgent1.sendCommand("genmove black").strip()
 		if( move == "resign"):
 			winner = game.PLAYERS["white"]
 			return winner
 		moves.append(move)
 		game.place_black(move_to_cell(move))
 		whiteAgent1.sendCommand("play black "+move)
-		whiteAgent2.sendCommand("play black "+move)
+		if(whiteAgent2): whiteAgent2.sendCommand("play black "+move)
 		if verbose:
-			print(blackAgent1.name+" and "+blackAgent2.name+" v.s. "+whiteAgent1.name+" and "+whiteAgent2.name)
+			print(blackAgent1.name+(" and "+blackAgent2.name if blackAgent2 else " " )+" v.s. "+whiteAgent1.name+(" and " + whiteAgent2.name if whiteAgent2 else " "))
 			print(game)
 		if(game.winner() != game.PLAYERS["none"]):
 			winner = game.winner()
@@ -59,26 +64,29 @@ def run_game(blackAgent1, blackAgent2, whiteAgent1, whiteAgent2, num_moves, boar
 		sys.stdout.flush()
 		if(move_count <= num_moves):
 			move = whiteAgent1.sendCommand("genmove white").strip()
-			whiteAgent2.sendCommand("play white "+move)
+			if(whiteAgent2): whiteAgent2.sendCommand("play white "+move)
 		else:
-			move = whiteAgent1.sendCommand("genmove white").strip()
-			whiteAgent1.sendCommand("play white "+move)
-        if( move == "resign"):
-                winner = game.PLAYERS["black"] 
-            return winner
+			if(whiteAgent2):
+				move = whiteAgent2.sendCommand("genmove white").strip()
+				whiteAgent1.sendCommand("play white "+move)
+			else:
+				move = whiteAgent1.sendCommand("genmove white").strip()
+	        if( move == "resign"):
+                	winner = game.PLAYERS["black"] 
+        		return winner
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent1.sendCommand("play white "+move)
-		blackAgent2.sendCommand("play white "+move)
-		if verbose:
-			print(blackAgent1.name+" and "+blackAgent2.name+" v.s. "+whiteAgent1.name+" and "+whiteAgent2.name)
+		if(blackAgent2): blackAgent2.sendCommand("play white "+move)
+		if verbose: 
+			print(blackAgent1.name+(" and "+blackAgent2.name if blackAgent2 else " " )+" v.s. "+whiteAgent1.name+(" and " + whiteAgent2.name if whiteAgent2 else " "))
 			print(game)
 		if(game.winner() != game.PLAYERS["none"]):
 			winner = game.winner()
 			break
 		sys.stdout.flush()
-	winner_name = blackAgent1.name+" and "+blackAgent2.name if winner == game.PLAYERS["black"] else whiteAgent1.name+" and "+whiteAgent2.name
-	loser_name =  whiteAgent1.name+" and "+whiteAgent2.name if winner == game.PLAYERS["black"] else blackAgent1.name+" and "+blackAgent2.name
+	winner_name = blackAgent1.name+(" and "+blackAgent2.name if blackAgent2 else " ") if winner == game.PLAYERS["black"] else whiteAgent1.name+(" and "+whiteAgent2.name if whiteAgent2 else " ")
+	loser_name =  whiteAgent1.name+(" and "+whiteAgent2.name if whiteAgent2 else " ") if winner == game.PLAYERS["black"] else blackAgent1.name+(" and "+blackAgent2.name if blackAgent2 else " ")
 	print("Game over, " + winner_name+ " ("+game.PLAYER_STR[winner]+") " + "wins against "+loser_name)
 	print(game)
 	print(" ".join(moves))
@@ -105,15 +113,17 @@ if(args.num_moves):
 	num_moves = args.num_moves
 else:
 	num_moves = 10
-mohex.sendCommand("param_mohex max_time "+str(time))
+mohex1.sendCommand("param_mohex max_time "+str(time))
+mohex2.sendCommand("param_mohex max_time "+str(time))
+
 neurohex = agent(neurohex_exe)
 white_wins = 0
 black_wins = 0
 for game in range(num_games):
-	winner = run_game(mohex1, neurohex, mohex2, mohex2, num_moves, 13, True)
+	winner = run_game(mohex1, neurohex, mohex2, None, num_moves, 13, True)
 	if(winner == gamestate.PLAYERS["black"]):
 		white_wins += 1
-	winner = run_game(mohex2, mohex2, mohex1, neurohex, num_moves, 13, True)
+	winner = run_game(mohex2, None	, mohex1, neurohex, num_moves, 13, True)
 	if(winner == gamestate.PLAYERS["white"]):
 		black_wins += 1
 

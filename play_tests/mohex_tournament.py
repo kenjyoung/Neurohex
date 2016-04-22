@@ -40,9 +40,9 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False, opening = None)
 		whiteAgent.sendCommand("play black "+opening)
 		sys.stdout.flush()
 		move = whiteAgent.sendCommand("genmove white").strip()
-        if( move == "resign"):
-            winner = game.PLAYERS["black"] 
-            return winner
+        	if( move == "resign"):
+            		winner = game.PLAYERS["black"] 
+            		return winner
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent.sendCommand("play white "+move)
@@ -51,7 +51,7 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False, opening = None)
 			print(game)
 		if(game.winner() != game.PLAYERS["none"]):
 			winner = game.winner()
-			break
+			return winner
 		sys.stdout.flush()
 
 	while(True):
@@ -70,9 +70,9 @@ def run_game(blackAgent, whiteAgent, boardsize, verbose = False, opening = None)
 			break
 		sys.stdout.flush()
 		move = whiteAgent.sendCommand("genmove white").strip()
-        if( move == "resign"):
-            winner = game.PLAYERS["black"] 
-            return winner
+        	if( move == "resign"):
+            		winner = game.PLAYERS["black"] 
+            		return winner
 		moves.append(move)
 		game.place_white(move_to_cell(move))
 		blackAgent.sendCommand("play white "+move)
@@ -117,9 +117,9 @@ white_wins = 0
 black_wins = 0
 if(args.all_openings):
 	for game in range(num_games):
-		for x in range(boardsize):
-			for y in range(boardsize):
-				opening = chr(ord('a')+x+str(y+1)
+		for x in range(13):
+			for y in range(13):
+				opening = chr(ord('a')+x)+str(y+1)
 				mohex.reconnect()
 				mohex.sendCommand("param_mohex max_time "+str(time))
 				winner = run_game(mohex, neurohex, 13, args.verbose, opening)
@@ -128,6 +128,7 @@ if(args.all_openings):
 				winner = run_game(neurohex, mohex, 13, args.verbose, opening)
 				if(winner == gamestate.PLAYERS["black"]):
 					black_wins += 1
+	num_games = num_games*169
 else:
 	for game in range(num_games):
 		mohex.reconnect()
