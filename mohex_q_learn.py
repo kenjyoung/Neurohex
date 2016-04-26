@@ -306,6 +306,8 @@ try:
 		move_cell = action_to_cell(np.random.choice(np.arange(boardsize*boardsize)))
 		play_cell(gameW, move_cell if move_parity else cell_m(move_cell), white if move_parity else black)
 		gameB = mirror_game(gameW)
+		mohex.reconnect()
+		mohex.sendCommand("param_mohex max_time 1")
 		mohex.sendCommand("clear_board")
 		mohex.sendCommand("play "+("black " if move_parity else "white ")+(move(cell_m(move_cell)) if move_parity else move(move_cell)))
 		move_parity = not move_parity
