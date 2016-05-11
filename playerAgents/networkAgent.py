@@ -39,12 +39,14 @@ class networkAgent:
 	def gtp_scores(self, args):
 		self.search()
 		out_str = "gogui-gfx:\ndfpn\nVAR\nLABEL "
-		for i in range(len(self.scores)):
-			cell = np.unravel_index(i, (boardsize,boardsize))
+		for i in range(self.state.size*self.state.size):
+			cell = np.unravel_index(i, (self.state.size,self.state.size))
+			raw_cell = (cell[0]+(boardsize-self.state.size)/2, cell[1]+(boardsize-self.state.size)/2)
 			toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
 			if(toplay == black):
 				cell = cell_m(cell)
-			out_str+= chr(ord('a')+cell[0])+str(cell[1]+1)+" @"+str(self.scores[i])[0:6]+"@ "
+			score_index = boardsize*raw_cell[0]+raw_cell[1]
+			out_str+= chr(ord('a')+cell[0])+str(cell[1]+1)+" @"+str(self.scores[score_index])[0:6]+"@ "
 		out_str+="\nTEXT scores\n"
 		print(out_str)
 		return(True, "")
@@ -71,6 +73,8 @@ class networkAgent:
 		Return the best move according to the current tree.
 		"""
 		move = np.unravel_index(self.scores.argmax(), (boardsize,boardsize))
+		#correct move for smaller boardsizes
+		move = (move[0]-(boardsize-self.state.size)/2, move[1]-(boardsize-self.state.size)/2)
 		#flip returned move if black to play to get move in actual game
 		toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
 		if(toplay == black):
