@@ -111,7 +111,7 @@ class gamestate:
 		Return list of neighbors of the passed cell.
 		"""
 		x = cell[0]
-		y=cell[1]
+		y = cell[1]
 		return [(n[0]+x , n[1]+y) for n in self.neighbor_patterns\
 			if (0<=n[0]+x and n[0]+x<self.size and 0<=n[1]+y and n[1]+y<self.size)]
 

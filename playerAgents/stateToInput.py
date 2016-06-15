@@ -7,7 +7,7 @@ from inputFormat import *
 def stateToInput(state):
 	board = state.board
 	ret = new_game(len(board))
-	padding = (input_size - len(board))/2
+	padding = (input_size - len(board)+1)/2
 	for i in range(len(board)):
 		for j in range(len(board)):
 			if board[i,j] == state.PLAYERS["white"]:

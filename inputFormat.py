@@ -59,18 +59,19 @@ def flip_game(game):
 	return m_game
 
 def new_game(size = boardsize):
-	if(size%2 ==0):
-		raise ValueError("boardsize must be odd")
+	if(size > 13):
+		raise(ValueError("Boardsize must be 13 or less"))
+	even = 1 - size%2
 	true_padding = (input_size - size)/2
 	game = np.zeros(input_shape, dtype=bool)
 	game[white, 0:true_padding, :] = 1
-	game[white, input_size-true_padding:, :] = 1
+	game[white, input_size-true_padding+even:, :] = 1
 	game[west, 0:true_padding, :] = 1
-	game[east, input_size-true_padding:, :] = 1
+	game[east, input_size-true_padding+even:, :] = 1
 	game[black, :, 0:true_padding] = 1
-	game[black, :, input_size-true_padding:] = 1
+	game[black, :, input_size-true_padding+even:] = 1
 	game[north, :, 0:true_padding] = 1
-	game[south, :, input_size-true_padding:] = 1
+	game[south, :, input_size-true_padding+even:] = 1
 	return game
 
 def winner(game):

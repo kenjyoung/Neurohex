@@ -74,7 +74,7 @@ class networkAgent:
 		"""
 		move = np.unravel_index(self.scores.argmax(), (boardsize,boardsize))
 		#correct move for smaller boardsizes
-		move = (move[0]-(boardsize-self.state.size)/2, move[1]-(boardsize-self.state.size)/2)
+		move = (move[0]-(boardsize-self.state.size+1)/2, move[1]-(boardsize-self.state.size+1)/2)
 		#flip returned move if black to play to get move in actual game
 		toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
 		if(toplay == black):
