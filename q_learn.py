@@ -53,13 +53,13 @@ def running_mean(x, N):
 
 def show_plots():
 	plt.figure(0)
-	plt.plot(running_mean(costs,50))
+	plt.plot(running_mean(costs,200))
 	plt.ylabel('cost')
 	plt.xlabel('episode')
 	plt.draw()
 	plt.pause(0.001)
 	plt.figure(1)
-	plt.plot(running_mean(values,50))
+	plt.plot(running_mean(values,200))
 	plt.ylabel('value')
 	plt.xlabel('episode')
 	plt.draw()
@@ -99,6 +99,10 @@ def softmax_policy(state, evaluator, temperature=1):
 			choice = i
 			break
 	return not_played.nonzero()[0][choice], scores.max()
+
+def get_outcome(game):
+	"""play out game to finish using greedy policy and return the winner"""
+	pass
 
 
 def Q_update():
@@ -160,7 +164,7 @@ parser.add_argument("--data", "-d", type =str, help="Specify a directory to save
 args = parser.parse_args()
 
 #save network every x minutes during training
-save_time = 30
+save_time = 60
 #save snapshot of network to unique file every x minutes during training
 snapshot_time = 240
 
