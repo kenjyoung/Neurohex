@@ -41,7 +41,7 @@ class networkAgent:
 		out_str = "gogui-gfx:\ndfpn\nVAR\nLABEL "
 		for i in range(self.state.size*self.state.size):
 			cell = np.unravel_index(i, (self.state.size,self.state.size))
-			raw_cell = (cell[0]+(boardsize-self.state.size)/2, cell[1]+(boardsize-self.state.size)/2)
+			raw_cell = (cell[0]+(boardsize-self.state.size+1)/2, cell[1]+(boardsize-self.state.size+1)/2)
 			toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
 			if(toplay == black):
 				cell = cell_m(cell)
