@@ -61,7 +61,6 @@ class networkAgent:
 		toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
 		if(toplay == black):
 			state = mirror_game(state)
-
 		played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
 		state[black,padding:boardsize+padding,padding:boardsize+padding]).flatten()
 		self.scores = self.evaluator(state)
