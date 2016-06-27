@@ -128,6 +128,7 @@ if(args.all_openings):
 				opening = chr(ord('a')+x)+str(y+1)
 				mohex.reconnect()
 				mohex.sendCommand("param_mohex max_time "+str(time))
+				mohex.sendCommand("boardsize "+str(boardsize)+" "+str(boardsize))
 				winner = run_game(mohex, neurohex, boardsize, args.verbose, opening)
 				if(winner == gamestate.PLAYERS["white"]):
 					white_wins += 1
@@ -139,6 +140,7 @@ else:
 	for game in range(num_games):
 		mohex.reconnect()
 		mohex.sendCommand("param_mohex max_time "+str(time))
+		mohex.sendCommand("boardsize "+str(boardsize)+" "+str(boardsize))
 		winner = run_game(mohex, neurohex, 13, args.verbose)
 		if(winner == gamestate.PLAYERS["white"]):
 			white_wins += 1
