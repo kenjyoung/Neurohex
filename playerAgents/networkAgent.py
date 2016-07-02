@@ -15,7 +15,6 @@ class networkAgent:
 		self.state = copy(state)
 		f = file(os.path.dirname(os.path.realpath(__file__))+"/network.save", 'rb')
 		network = cPickle.load(f)
-		batch_size = network.batch_size
 		f.close()
 
 		input_state = T.tensor3('input_state')

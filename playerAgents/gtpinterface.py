@@ -1,11 +1,12 @@
 import sys
 from resistanceAgent import resistanceAgent
 from networkAgent import networkAgent
+from treeNetAgent import treeNetAgent
 from gamestate import gamestate
 version = 0.1
 protocol_version = 2
 class gtpinterface:
-	AGENTS = {"resistance" : resistanceAgent, "network" : networkAgent}
+	AGENTS = {"resistance" : resistanceAgent, "network" : networkAgent, "treeNet" : treeNetAgent}
 	"""
 	Interface for using go-text-protocol to control the program
 	Each implemented GTP command returns a string response for the user, along with
@@ -13,9 +14,9 @@ class gtpinterface:
 	The interface contains an agent which decides which moves to make on request
 	along with a gamestate which holds the current state of the game.
 	"""
-	def __init__(self, agent_name ="basic"):
+	def __init__(self, agent_name ="treeNet"):
 		"""
-		Initilize the list of available commands, binding appropriate names to the
+		Initialize the list of available commands, binding appropriate names to the
 		funcitons defined in this file.
 		"""
 		commands={}
@@ -98,7 +99,7 @@ class gtpinterface:
 		"""
 		if(len(args)<1):
 			return (False, "Not enough arguments")
-		if(args[0] in commands):
+		if(args[0] in self.commands):
 			return (True, "true")
 		else:
 			return (True, "false")
