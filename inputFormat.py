@@ -12,7 +12,7 @@ north = 4
 south = 5
 topBlack = 7
 topRightBlack = 8
-bottomRightBlack = 19
+bottomRightBlack = 9
 bottomBlack = 10
 bottomLeftBlack = 11
 topLeftBlack = 6
@@ -101,9 +101,9 @@ def flip_game(game):
 
 def new_game(size = boardsize):
 	if(size > boardsize):
-		raise(ValueError("Boardsize must be"+str(boardsize)+" or less"))
+		raise ValueError
 	even = 1 - size%2
-	true_padding = (input_size - size+1)/2
+	true_padding = int ((input_size - size+1)/2)
 	game = np.zeros(input_shape, dtype=bool)
 	game[white, 0:true_padding, :] = 1
 	game[white, input_size-true_padding+even:, :] = 1
@@ -165,6 +165,7 @@ def play_cell(game, cell, color):
 		flood_fill(game, cell, color, edge1)
 	if(edge2_connection):
 		flood_fill(game, cell, color, edge2)
+	return game
 
 def state_string(state):
 	"""
